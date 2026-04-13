@@ -1,1 +1,530 @@
-<!DOCTYPE html><html><head><meta charset='UTF-8'><title>comdemao NCT</title></head><body><h1>Coming Soon</h1></body></html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成绩单分析系统</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
+  .header { background: linear-gradient(135deg, #1a56db 0%, #1e40af 100%); color: white; padding: 24px 32px; box-shadow: 0 2px 8px rgba(26,86,219,0.3); }
+  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: 1px; }
+  .header p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .upload-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .upload-card h3 { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 4px; }
+  .upload-card p { font-size: 12px; color: #a0aec0; margin-bottom: 16px; }
+  .drop-zone { border: 2px dashed #cbd5e0; border-radius: 8px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: #1a56db; background: #eff6ff; }
+  .drop-zone.has-file { border-color: #38a169; background: #f0fff4; }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 32px; margin-bottom: 8px; }
+  .drop-text { font-size: 13px; color: #718096; }
+  .drop-text strong { color: #1a56db; }
+  .file-name { font-size: 13px; color: #38a169; font-weight: 500; margin-top: 6px; }
+  .btn-analyze { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a56db, #1e40af); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; letter-spacing: 1px; }
+  .btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,86,219,0.4); }
+  .btn-analyze:disabled { background: #a0aec0; cursor: not-allowed; transform: none; box-shadow: none; }
+  .loading { display: none; text-align: center; padding: 40px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #1a56db; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-box { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 10px; padding: 16px 20px; color: #c53030; font-size: 14px; margin-bottom: 20px; display: none; }
+  .results { display: none; }
+  .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .result-header h2 { font-size: 18px; font-weight: 600; }
+  .btn-download { padding: 10px 24px; background: #38a169; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .btn-download:hover { background: #2f855a; transform: translateY(-1px); }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: white; border-radius: 10px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .stat-card .label { font-size: 12px; color: #718096; margin-bottom: 6px; }
+  .stat-card .value { font-size: 24px; font-weight: 700; color: #1a56db; }
+  .stat-card .sub { font-size: 11px; color: #a0aec0; margin-top: 2px; }
+  .session-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 20px; }
+  .session-title { font-size: 15px; font-weight: 600; color: #1a56db; border-bottom: 2px solid #ebf4ff; padding-bottom: 12px; margin-bottom: 18px; }
+  .metrics-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .metrics-table th { background: #f7fafc; padding: 10px 14px; text-align: left; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
+  .metrics-table td { padding: 9px 14px; border-bottom: 1px solid #f0f4f8; }
+  .metrics-table tr:last-child td { border-bottom: none; }
+  .metrics-table tr:hover td { background: #f7fafc; }
+  .section-row td { background: #eff6ff !important; font-weight: 600; color: #1e40af; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .badge-pass { background: #c6f6d5; color: #276749; }
+  .badge-fail { background: #fed7d7; color: #9b2c2c; }
+  .q-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 16px; }
+  .q-item { background: #f7fafc; border-radius: 8px; padding: 12px; text-align: center; }
+  .q-item .q-name { font-size: 11px; color: #718096; margin-bottom: 4px; }
+  .q-item .q-val { font-size: 18px; font-weight: 700; color: #2d3748; }
+  .q-item .q-type { font-size: 10px; color: #a0aec0; }
+  @media (max-width: 640px) { .upload-section { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📊 成绩单分析系统</h1>
+  <p>上传用户总表和成绩明细，自动生成分析报告</p>
+</div>
+<div class="container">
+  <div class="upload-section">
+    <div class="upload-card">
+      <h3>📋 用户总表</h3>
+      <p>含「是否为AIC++学员」字段的 Excel 文件</p>
+      <div class="drop-zone" id="drop1">
+        <input type="file" id="file1" accept=".xlsx,.xls,.csv">
+        <div class="drop-icon">📁</div>
+        <div class="drop-text">拖拽文件到此处，或<strong>点击选择</strong></div>
+        <div class="file-name" id="name1"></div>
+      </div>
+    </div>
+    <div class="upload-card">
+      <h3>📝 成绩明细</h3>
+      <p>含多个场次 Sheet 的 Excel 文件</p>
+      <div class="drop-zone" id="drop2">
+        <input type="file" id="file2" accept=".xlsx,.xls">
+        <div class="drop-icon">📁</div>
+        <div class="drop-text">拖拽文件到此处，或<strong>点击选择</strong></div>
+        <div class="file-name" id="name2"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-analyze" id="btnAnalyze" onclick="analyze()">开始分析</button>
+
+  <div class="error-box" id="errorBox"></div>
+  <div class="loading" id="loading"><div class="spinner"></div><div style="color:#718096;font-size:14px">正在分析中，请稍候…</div></div>
+
+  <div class="results" id="results">
+    <div class="result-header">
+      <h2>分析结果</h2>
+      <button class="btn-download" onclick="downloadExcel()">⬇️ 下载 result.xlsx</button>
+    </div>
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+const GROUP_COL = '是否为AIC++学员';
+const CERT_COL = '准考证号';
+const META_COLS = new Set(['考生姓名','用户id','用户ID','准考证号','报考机构','缺考标记','场次']);
+const SCORE_EXCELLENT = 90, SCORE_GOOD = 75, SCORE_PASS = 60;
+
+let file1Data = null, file2Data = null;
+let lastSessionMetrics = [], lastObjCols = [], lastSubCols = [], lastMTotal = null;
+
+// Drag & drop
+['drop1','drop2'].forEach((id, idx) => {
+  const zone = document.getElementById(id);
+  const input = document.getElementById('file' + (idx+1));
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f, idx+1);
+  });
+  input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0], idx+1); });
+});
+
+function handleFile(f, n) {
+  const zone = document.getElementById('drop' + n);
+  document.getElementById('name' + n).textContent = '✅ ' + f.name;
+  zone.classList.add('has-file');
+  const reader = new FileReader();
+  reader.onload = e => { if (n === 1) file1Data = {name: f.name, buf: e.target.result}; else file2Data = {name: f.name, buf: e.target.result}; };
+  reader.readAsArrayBuffer(f);
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = '⚠️ ' + msg;
+  box.style.display = 'block';
+}
+function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+
+function readWorkbook(buf) {
+  return XLSX.read(new Uint8Array(buf), {type:'array', cellDates:true});
+}
+
+function sheetToRows(ws) {
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h == null ? '' : String(h).trim());
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = r[i] == null ? null : r[i]);
+    return obj;
+  });
+}
+
+function parseScoreSheet(rows) {
+  if (!rows.length) return { rows, objCols: [], subCols: [] };
+  const headers = Object.keys(rows[0]);
+  const dataCols = headers.filter(h => !META_COLS.has(h) && h !== '');
+  // skip first row if it looks like question numbers
+  let data = rows;
+  if (rows.length > 0 && dataCols.length > 0) {
+    const firstVal = String(rows[0][dataCols[0]] || '').trim();
+    if (/^\d+$/.test(firstVal)) data = rows.slice(1);
+  }
+  const objCols = headers.filter(h => h.includes('单项') || h.includes('选择'));
+  const subCols = headers.filter(h => h.includes('编程') || h.includes('操作'));
+  // coerce to number
+  data = data.map(r => {
+    const nr = {...r};
+    [...objCols, ...subCols].forEach(c => { nr[c] = parseFloat(nr[c]) || 0; });
+    return nr;
+  });
+  return { rows: data, objCols, subCols };
+}
+
+function normSession(s) { return String(s).replace(/[:：]/g, '-').trim(); }
+
+function matchSessions(userRows, scoreSheets) {
+  const sessionColName = ['场次名称','场次','考试场次'].find(c => userRows[0] && c in userRows[0]);
+  const normMap = {};
+  Object.entries(scoreSheets).forEach(([k, v]) => { normMap[normSession(k)] = { key: k, rows: v }; });
+  const pairs = [];
+  if (sessionColName) {
+    const groups = {};
+    userRows.forEach(r => {
+      const sn = String(r[sessionColName] || '');
+      if (!groups[sn]) groups[sn] = [];
+      groups[sn].push(r);
+    });
+    Object.entries(groups).forEach(([sn, uRows]) => {
+      const matched = normMap[normSession(sn)];
+      pairs.push({ name: sn, userRows: uRows, scoreRows: matched ? matched.rows : null });
+    });
+  } else {
+    Object.entries(scoreSheets).forEach(([k, rows]) => {
+      pairs.push({ name: k, userRows: [...userRows], scoreRows: rows });
+    });
+  }
+  return pairs;
+}
+
+function joinScores(userRows, scoreRows, objCols, subCols) {
+  if (!scoreRows) return userRows.map(r => ({...r}));
+  const lookup = {};
+  scoreRows.forEach(r => { if (r[CERT_COL] != null) lookup[String(r[CERT_COL]).trim()] = r; });
+  return userRows.map(u => {
+    const key = String(u[CERT_COL] || '').trim();
+    const s = lookup[key];
+    const merged = {...u};
+    if (s) {
+      objCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+      subCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+      if (objCols.length) merged['客观题得分'] = objCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+      if (subCols.length) merged['主观题得分'] = subCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+      const all = [...objCols, ...subCols];
+      if (all.length) merged['卷面成绩'] = all.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+    }
+    if (merged['卷面成绩'] != null) merged['通过状态'] = scoreStatus(merged['卷面成绩']);
+    return merged;
+  });
+}
+
+function scoreStatus(s) {
+  const n = parseFloat(s) || 0;
+  if (n >= SCORE_EXCELLENT) return '优秀';
+  if (n >= SCORE_GOOD) return '良好';
+  if (n >= SCORE_PASS) return '合格';
+  return '不合格';
+}
+
+function cleanData(rows) {
+  return rows.filter(r => {
+    const absent = Object.keys(r).find(k => k.includes('缺考'));
+    if (absent && String(r[absent]).includes('缺考')) return false;
+    const name = String(r['考生姓名'] || '');
+    if (/测试|备用|test/i.test(name)) return false;
+    return true;
+  });
+}
+
+function avg(rows, col) {
+  const vals = rows.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+  if (!vals.length) return 'N/A';
+  return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+}
+
+function pct(a, b) { return b ? (a / b * 100).toFixed(2) + '%' : '0.00%'; }
+function pctNum(a, b) { return b ? parseFloat((a / b * 100).toFixed(2)) : 0; }
+
+function computeMetrics(rows, objCols, subCols) {
+  if (!rows.length) return null;
+  const aic = rows.filter(r => r[GROUP_COL] === 'AIC++');
+  const cpp = rows.filter(r => r[GROUP_COL] !== 'AIC++');
+  const total = rows.length;
+
+  function passCount(sub) {
+    return sub.filter(r => {
+      const s = parseFloat(r['卷面成绩']);
+      return !isNaN(s) && s >= SCORE_PASS;
+    }).length;
+  }
+  function gradeCounts(sub) {
+    let ex = 0, gd = 0, ok = 0;
+    sub.forEach(r => {
+      const s = parseFloat(r['卷面成绩']) || 0;
+      if (s >= SCORE_EXCELLENT) ex++;
+      else if (s >= SCORE_GOOD) gd++;
+      else if (s >= SCORE_PASS) ok++;
+    });
+    return [ex, gd, ok];
+  }
+
+  const allPass = passCount(rows);
+  const aicPass = passCount(aic);
+  const cppPass = passCount(cpp);
+
+  const qStats = {};
+  objCols.forEach((c, i) => {
+    const vals = rows.map(r => parseFloat(r[c]) || 0);
+    const passN = vals.filter(v => v > 0).length;
+    qStats['客观第' + (i+1) + '题'] = { type: 'rate', val: pctNum(passN, total) };
+  });
+  subCols.forEach((c, j) => {
+    const vals = rows.map(r => parseFloat(r[c]) || 0);
+    const mean = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    qStats['主观第' + (j+1) + '题'] = { type: 'avg', val: parseFloat(mean.toFixed(2)) };
+  });
+
+  return {
+    total, allPass, allPassRate: pctNum(allPass, total),
+    gradeCounts: gradeCounts(rows),
+    aicTotal: aic.length, aicPass, aicRatio: pctNum(aic.length, total), aicPassRate: pctNum(aicPass, aic.length),
+    aicGrades: gradeCounts(aic), aicObjAvg: avg(aic, '客观题得分'), aicSubAvg: avg(aic, '主观题得分'), aicVolAvg: avg(aic, '卷面成绩'),
+    cppTotal: cpp.length, cppPass, cppRatio: pctNum(cpp.length, total), cppPassRate: pctNum(cppPass, cpp.length),
+    cppGrades: gradeCounts(cpp), cppObjAvg: avg(cpp, '客观题得分'), cppSubAvg: avg(cpp, '主观题得分'), cppVolAvg: avg(cpp, '卷面成绩'),
+    qStats
+  };
+}
+
+function renderResults(sessionMetrics, mTotal, objCols, subCols) {
+  const container = document.getElementById('resultContent');
+  let html = '';
+
+  // Summary cards (use mTotal if available, else first session)
+  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
+  if (sum) {
+    html += `<div class="summary-grid">
+      <div class="stat-card"><div class="label">实际参考人数</div><div class="value">${sum.total}</div><div class="sub">人</div></div>
+      <div class="stat-card"><div class="label">全卷通过率</div><div class="value">${sum.allPassRate}%</div><div class="sub">${sum.allPass}/${sum.total} 人通过</div></div>
+      <div class="stat-card"><div class="label">AIC++ 通过率</div><div class="value">${sum.aicPassRate}%</div><div class="sub">${sum.aicPass}/${sum.aicTotal} 人</div></div>
+      <div class="stat-card"><div class="label">C++小班通过率</div><div class="value">${sum.cppPassRate}%</div><div class="sub">${sum.cppPass}/${sum.cppTotal} 人</div></div>
+    </div>`;
+  }
+
+  // Each session
+  sessionMetrics.forEach(({ name, m, removed }) => {
+    html += renderSessionCard(name, m, removed, objCols, subCols);
+  });
+
+  // Total summary
+  if (mTotal && sessionMetrics.length > 1) {
+    html += renderSessionCard('汇总（所有场次）', mTotal, 0, objCols, subCols, true);
+  }
+
+  container.innerHTML = html;
+}
+
+function gradeStr(g) { return `优秀 ${g[0]} / 良好 ${g[1]} / 合格 ${g[2]}`; }
+
+function renderSessionCard(name, m, removed, objCols, subCols, isTotal = false) {
+  const removeNote = removed > 0 ? `<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>` : '';
+  let qHtml = '';
+  if (Object.keys(m.qStats).length) {
+    qHtml = '<div class="q-grid">';
+    Object.entries(m.qStats).forEach(([qname, {type, val}]) => {
+      qHtml += `<div class="q-item"><div class="q-name">${qname}</div><div class="q-val">${type==='rate' ? val+'%' : val}</div><div class="q-type">${type==='rate' ? '通过率' : '均分'}</div></div>`;
+    });
+    qHtml += '</div>';
+  }
+  return `<div class="session-card">
+    <div class="session-title">${isTotal ? '📊 ' : '📋 '}${name} ${removeNote}</div>
+    <table class="metrics-table">
+      <tr><th>指标</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>
+      <tr class="section-row"><td colspan="4">── 基础指标 ──</td></tr>
+      <tr><td>参考人数</td><td>${m.total} 人</td><td>${m.aicTotal} 人（${m.aicRatio}%）</td><td>${m.cppTotal} 人（${m.cppRatio}%）</td></tr>
+      <tr><td>通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%</span></td><td><span class="badge ${m.aicPassRate>=60?'badge-pass':'badge-fail'}">${m.aicPassRate}%</span></td><td><span class="badge ${m.cppPassRate>=60?'badge-pass':'badge-fail'}">${m.cppPassRate}%</span></td></tr>
+      <tr><td>优/良/合格人数</td><td>${gradeStr(m.gradeCounts)}</td><td>${gradeStr(m.aicGrades)}</td><td>${gradeStr(m.cppGrades)}</td></tr>
+      <tr class="section-row"><td colspan="4">── 均分 ──</td></tr>
+      <tr><td>客观题均分</td><td>—</td><td>${m.aicObjAvg}</td><td>${m.cppObjAvg}</td></tr>
+      <tr><td>主观题均分</td><td>—</td><td>${m.aicSubAvg}</td><td>${m.cppSubAvg}</td></tr>
+      <tr><td>卷面均分</td><td>—</td><td>${m.aicVolAvg}</td><td>${m.cppVolAvg}</td></tr>
+    </table>
+    ${qHtml ? '<div style="margin-top:16px"><div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div>' + qHtml + '</div>' : ''}
+  </div>`;
+}
+
+async function analyze() {
+  hideError();
+  if (!file1Data || !file2Data) { showError('请先上传两个文件'); return; }
+  document.getElementById('btnAnalyze').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+
+  await new Promise(r => setTimeout(r, 50));
+
+  try {
+    // Read user table
+    const wb1 = readWorkbook(file1Data.buf);
+    let userRows = null;
+    for (const sn of wb1.SheetNames) {
+      const rows = sheetToRows(wb1.Sheets[sn]);
+      if (rows.length && GROUP_COL in rows[0]) { userRows = rows; break; }
+    }
+    if (!userRows) throw new Error(`用户总表中未找到「${GROUP_COL}」字段，请确认文件正确`);
+
+    // Dedup by CERT_COL
+    const seen = new Set();
+    userRows = userRows.filter(r => {
+      const k = String(r[CERT_COL] || '');
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+
+    // Read score file
+    const wb2 = readWorkbook(file2Data.buf);
+    const scoreSheets = {};
+    wb2.SheetNames.forEach(sn => {
+      scoreSheets[sn] = sheetToRows(wb2.Sheets[sn]);
+    });
+
+    // Parse score sheets
+    const parsedSheets = {};
+    let globalObjCols = [], globalSubCols = [];
+    Object.entries(scoreSheets).forEach(([k, rows]) => {
+      const { rows: parsed, objCols, subCols } = parseScoreSheet(rows);
+      parsedSheets[k] = { rows: parsed, objCols, subCols };
+      if (objCols.length > globalObjCols.length) { globalObjCols = objCols; globalSubCols = subCols; }
+    });
+
+    // Match sessions
+    const pairs = matchSessions(userRows, Object.fromEntries(Object.entries(parsedSheets).map(([k,v]) => [k, v.rows])));
+
+    const sessionMetrics = [];
+    const allCleanedRows = [];
+
+    for (const pair of pairs) {
+      const sheetInfo = parsedSheets[pair.name] || Object.values(parsedSheets)[0] || { rows: [], objCols: globalObjCols, subCols: globalSubCols };
+      const objCols = sheetInfo.objCols.length ? sheetInfo.objCols : globalObjCols;
+      const subCols = sheetInfo.subCols.length ? sheetInfo.subCols : globalSubCols;
+
+      const joined = joinScores(pair.userRows, pair.scoreRows, objCols, subCols);
+      const beforeClean = joined.length;
+      const cleaned = cleanData(joined);
+      const removed = beforeClean - cleaned.length;
+      const m = computeMetrics(cleaned, objCols, subCols);
+      if (!m) continue;
+      sessionMetrics.push({ name: pair.name, m, removed, objCols, subCols });
+      allCleanedRows.push(...cleaned);
+    }
+
+    if (!sessionMetrics.length) throw new Error('未找到有效场次数据，请检查文件格式');
+
+    let mTotal = null;
+    if (sessionMetrics.length > 1) {
+      mTotal = computeMetrics(allCleanedRows, globalObjCols, globalSubCols);
+    }
+
+    lastSessionMetrics = sessionMetrics;
+    lastObjCols = globalObjCols;
+    lastSubCols = globalSubCols;
+    lastMTotal = mTotal;
+
+    renderResults(sessionMetrics, mTotal, globalObjCols, globalSubCols);
+    document.getElementById('results').style.display = 'block';
+  } catch(e) {
+    showError(e.message || '分析失败，请检查文件格式');
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('btnAnalyze').disabled = false;
+  }
+}
+
+function downloadExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: 分析结果
+  const datasets = [];
+  if (lastMTotal && lastSessionMetrics.length > 1) datasets.push(['总和', lastMTotal]);
+  lastSessionMetrics.forEach(({name, m}) => datasets.push([name, m]));
+
+  const headers = ['指标', ...datasets.map(d => d[0])];
+  const rows1 = [headers];
+
+  function addRow(label, vals, isSection) {
+    rows1.push([label, ...vals]);
+  }
+
+  addRow('── 总体 ──', datasets.map(() => ''));
+  addRow('实际参考人数', datasets.map(([,m]) => m.total));
+  addRow('全卷通过率', datasets.map(([,m]) => m.allPassRate + '%'));
+  addRow('  优秀人数', datasets.map(([,m]) => m.gradeCounts[0]));
+  addRow('  良好人数', datasets.map(([,m]) => m.gradeCounts[1]));
+  addRow('  合格人数', datasets.map(([,m]) => m.gradeCounts[2]));
+  addRow('── AIC++ ──', datasets.map(() => ''));
+  addRow('AIC++ 考生占比', datasets.map(([,m]) => m.aicRatio + '%'));
+  addRow('AIC++ 通过率', datasets.map(([,m]) => m.aicPassRate + '%'));
+  addRow('AIC++ 客观题均分', datasets.map(([,m]) => m.aicObjAvg));
+  addRow('AIC++ 主观题均分', datasets.map(([,m]) => m.aicSubAvg));
+  addRow('AIC++ 卷面均分', datasets.map(([,m]) => m.aicVolAvg));
+  addRow('── C++小班 ──', datasets.map(() => ''));
+  addRow('C++小班 考生占比', datasets.map(([,m]) => m.cppRatio + '%'));
+  addRow('C++小班 通过率', datasets.map(([,m]) => m.cppPassRate + '%'));
+  addRow('C++小班 客观题均分', datasets.map(([,m]) => m.cppObjAvg));
+  addRow('C++小班 主观题均分', datasets.map(([,m]) => m.cppSubAvg));
+  addRow('C++小班 卷面均分', datasets.map(([,m]) => m.cppVolAvg));
+
+  // Questions
+  if (datasets.length) {
+    const qs = datasets[0][1].qStats;
+    addRow('── 每道题 ──', datasets.map(() => ''));
+    Object.entries(qs).forEach(([qname, {type}]) => {
+      addRow(qname + (type==='rate'?'（通过率）':'（均分）'), datasets.map(([,m]) => {
+        const q = m.qStats[qname];
+        return q ? (type==='rate' ? q.val+'%' : q.val) : '';
+      }));
+    });
+  }
+
+  const ws1 = XLSX.utils.aoa_to_sheet(rows1);
+  XLSX.utils.book_append_sheet(wb, ws1, '分析结果');
+
+  // Sheet 2: 复制粘贴
+  const rows2 = [];
+  if (datasets.length) {
+    const qs = datasets[0][1].qStats;
+    // obj rates
+    Object.entries(qs).forEach(([, {type}], i) => {
+      if (type === 'rate') {
+        const qname = Object.keys(qs)[i];
+        rows2.push(datasets.map(([,m]) => m.qStats[qname]?.val ?? ''));
+      }
+    });
+    // sub avgs
+    Object.entries(qs).forEach(([, {type}], i) => {
+      if (type === 'avg') {
+        const qname = Object.keys(qs)[i];
+        rows2.push(datasets.map(([,m]) => m.qStats[qname]?.val ?? ''));
+      }
+    });
+    rows2.push(datasets.map(([,m]) => m.allPassRate));
+    rows2.push(datasets.map(([,m]) => m.aicPassRate));
+    rows2.push(datasets.map(([,m]) => m.cppPassRate));
+    rows2.push(datasets.map(([,m]) => m.total));
+    rows2.push(datasets.map(([,m]) => m.aicRatio));
+    rows2.push(datasets.map(([,m]) => m.cppRatio));
+  }
+  const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+  XLSX.utils.book_append_sheet(wb, ws2, '复制粘贴');
+
+  XLSX.writeFile(wb, 'result.xlsx');
+}
+</script>
+</body>
+</html>
