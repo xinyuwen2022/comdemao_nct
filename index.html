@@ -568,9 +568,9 @@ function downloadExcel() {
     row4('全卷通过率',           m.allPassRate + '%', m.aicPassRate + '%', m.cppPassRate + '%');
     row4('通过人数（人）',       m.allPass,           m.aicPass,           m.cppPass);
     row4('不合格人数（人）',
-      m.total    - m.allPass - m.gradeCounts[0] - m.gradeCounts[1] - m.gradeCounts[2],
-      m.aicTotal - m.aicPass - m.aicGrades[0]  - m.aicGrades[1]  - m.aicGrades[2],
-      m.cppTotal - m.cppPass - m.cppGrades[0]  - m.cppGrades[1]  - m.cppGrades[2]);
+      m.total    - m.allPass,
+      m.aicTotal - m.aicPass,
+      m.cppTotal - m.cppPass);
     row4('合格人数 60-74（人）', m.gradeCounts[2],    m.aicGrades[2],      m.cppGrades[2]);
     row4('良好人数 75-89（人）', m.gradeCounts[1],    m.aicGrades[1],      m.cppGrades[1]);
     row4('优秀人数 ≥90（人）',   m.gradeCounts[0],    m.aicGrades[0],      m.cppGrades[0]);
@@ -685,7 +685,7 @@ function renderSingleResults(sessionMetrics, mTotal) {
 function renderSingleCard(name, m, removed, isTotal = false) {
   const removeNote = removed > 0 ? `<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>` : '';
   const gc = m.gradeCounts;
-  const noPass = m.total - m.allPass - gc[0] - gc[1] - gc[2];
+  const noPass = m.total - m.allPass;
 
   let qHtml = '';
   if (Object.keys(m.qStats).length) {
@@ -800,7 +800,7 @@ function downloadExcelSingle() {
     aoa.push(['实际参考人数（人）', m.total]);
     aoa.push(['全卷通过率（%）', m.allPassRate]);
     aoa.push(['通过人数（人）', m.allPass]);
-    aoa.push(['不合格（人）', m.total - m.allPass - m.gradeCounts[0] - m.gradeCounts[1] - m.gradeCounts[2]]);
+    aoa.push(['不合格（人）', m.total - m.allPass]);
     aoa.push(['合格 60-74（人）', m.gradeCounts[2]]);
     aoa.push(['良好 75-89（人）', m.gradeCounts[1]]);
     aoa.push(['优秀 ≥90（人）', m.gradeCounts[0]]);
