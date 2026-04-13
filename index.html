@@ -150,7 +150,14 @@ function readWorkbook(buf) {
 function sheetToRows(ws) {
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
   if (!rows.length) return [];
-  const headers = rows[0].map(h => h == null ? '' : String(h).trim());
+  // 对重复列名自动加编号，避免后面的值覆盖前面的
+  const rawHeaders = rows[0].map(h => h == null ? '' : String(h).trim());
+  const seen = {};
+  const headers = rawHeaders.map(h => {
+    if (!h) return h;
+    seen[h] = (seen[h] || 0) + 1;
+    return seen[h] === 1 ? h : h + '__' + seen[h];
+  });
   return rows.slice(1).map(r => {
     const obj = {};
     headers.forEach((h, i) => obj[h] = r[i] == null ? null : r[i]);
@@ -162,15 +169,16 @@ function parseScoreSheet(rows) {
   if (!rows.length) return { rows, objCols: [], subCols: [] };
   const headers = Object.keys(rows[0]);
   const dataCols = headers.filter(h => !META_COLS.has(h) && h !== '');
-  // skip first row if it looks like question numbers
+  // 跳过题号行（第一行非元数据列首个值为纯数字）
   let data = rows;
   if (rows.length > 0 && dataCols.length > 0) {
     const firstVal = String(rows[0][dataCols[0]] || '').trim();
     if (/^\d+$/.test(firstVal)) data = rows.slice(1);
   }
-  const objCols = headers.filter(h => h.includes('单项') || h.includes('选择'));
+  // 匹配去重后的列名（含 __N 后缀）
+  const objCols = headers.filter(h => h.includes('单项') || (h.includes('选择') && !h.includes('编程')));
   const subCols = headers.filter(h => h.includes('编程') || h.includes('操作'));
-  // coerce to number
+  // 强制转数值
   data = data.map(r => {
     const nr = {...r};
     [...objCols, ...subCols].forEach(c => { nr[c] = parseFloat(nr[c]) || 0; });
@@ -205,13 +213,13 @@ function joinScores(userRows, scoreRows, objCols, subCols) {
     const key = String(s[CERT_COL] || '').trim();
     // 补充渠道字段，匹配不到默认非AIC++
     merged[GROUP_COL] = channelLookup[key] || '非AIC++';
-    // 强制转数值
+    // 强制转数值，用去重后的内部列名读取正确分值
     objCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
     subCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
-    if (objCols.length) merged['客观题得分'] = objCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
-    if (subCols.length) merged['主观题得分'] = subCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+    if (objCols.length) merged['客观题得分'] = objCols.reduce((a, c) => a + (merged[c] || 0), 0);
+    if (subCols.length) merged['主观题得分'] = subCols.reduce((a, c) => a + (merged[c] || 0), 0);
     const all = [...objCols, ...subCols];
-    if (all.length) merged['卷面成绩'] = all.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+    if (all.length) merged['卷面成绩'] = all.reduce((a, c) => a + (merged[c] || 0), 0);
     if (merged['卷面成绩'] != null) merged['通过状态'] = scoreStatus(merged['卷面成绩']);
     return merged;
   });
@@ -272,33 +280,23 @@ function computeMetrics(rows, objCols, subCols) {
   const aicPass = passCount(aic);
   const cppPass = passCount(cpp);
 
-  // 每道题：整体 + AIC++ + C++小班 各自通过率/均分
+  // 每道题：整体 + AIC++ + C++小班 各自正确率/均分
   const qStats = {};
   objCols.forEach((c, i) => {
-    const label = '客观第' + (i+1) + '题';
-    function objRate(sub) {
+    const label = '选择题第' + (i+1) + '题';
+    const objRate = sub => {
       const vals = sub.map(r => parseFloat(r[c]) || 0);
       return pctNum(vals.filter(v => v > 0).length, sub.length);
-    }
-    qStats[label] = {
-      type: 'rate',
-      val:    objRate(rows),
-      aicVal: objRate(aic),
-      cppVal: objRate(cpp)
     };
+    qStats[label] = { type: 'rate', val: objRate(rows), aicVal: objRate(aic), cppVal: objRate(cpp) };
   });
   subCols.forEach((c, j) => {
-    const label = '主观第' + (j+1) + '题';
-    function subAvg(sub) {
+    const label = '操作题第' + (j+1) + '题';
+    const subAvg = sub => {
       const vals = sub.map(r => parseFloat(r[c]) || 0);
       return vals.length ? parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)) : 0;
-    }
-    qStats[label] = {
-      type: 'avg',
-      val:    subAvg(rows),
-      aicVal: subAvg(aic),
-      cppVal: subAvg(cpp)
     };
+    qStats[label] = { type: 'avg', val: subAvg(rows), aicVal: subAvg(aic), cppVal: subAvg(cpp) };
   });
 
   return {
@@ -357,7 +355,7 @@ function renderSessionCard(name, m, removed, objCols, subCols, isTotal = false) 
       const fmt = v => type === 'rate' ? v + '%' : v;
       const unit = type === 'rate' ? '正确率' : '均分';
       qHtml += `<tr>
-        <td>${qname}<span style="font-size:11px;color:#a0aec0;margin-left:4px">${unit}</span></td>
+        <td>${qname} <span style="font-size:11px;color:#a0aec0">${unit}</span></td>
         <td>${fmt(val)}</td>
         <td>${fmt(aicVal)}</td>
         <td>${fmt(cppVal)}</td>
