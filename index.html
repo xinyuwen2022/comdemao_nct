@@ -491,107 +491,77 @@ function resetAll() {
 function downloadExcel() {
   const wb = XLSX.utils.book_new();
 
-  // 数据集：总和在前，各场次依次排列
+  // 各场次在前，汇总在最后（与页面顺序一致）
   const datasets = [];
-  if (lastMTotal && lastSessionMetrics.length > 1) datasets.push(['汇总（所有场次）', lastMTotal]);
   lastSessionMetrics.forEach(({name, m}) => datasets.push([name, m]));
+  if (lastMTotal && lastSessionMetrics.length > 1) datasets.push(['汇总（所有场次）', lastMTotal]);
   if (!datasets.length) return;
 
   const qs = datasets[0][1].qStats;
   const qNames = Object.keys(qs);
 
-  // ── Sheet 1：分析结果（行=指标，列=场次，完整标注） ──────────────────
-  // 结构：第一列为指标名，第二列起为各数据集（总和/场次）
-  // 指标列分区：全体 / AIC++ / C++小班 / 每道题（全体/AIC++/C++小班各一行）
-  const colHeaders = ['指标', ...datasets.map(([label]) => label)];
-  const aoa1 = [colHeaders];
+  // ── Sheet 1：分析结果（与页面一致：列=指标|全体|AIC++|C++小班，各场次竖向堆叠） ──
+  const aoa1 = [];
+  const sec  = label => aoa1.push(['── ' + label + ' ──', '', '', '']);
+  const row4 = (label, a, b, c) => aoa1.push([label, a, b, c]);
 
-  const addRow1 = (label, vals) => aoa1.push([label, ...vals]);
-  const section  = label => addRow1(label, datasets.map(() => ''));
-  const dataRow  = (label, fn) => addRow1(label, datasets.map(([, m]) => fn(m)));
+  datasets.forEach(([label, m]) => {
+    // 场次标题行
+    aoa1.push([label, '全体', 'AIC++', 'C++小班']);
 
-  section('【全体】');
-  dataRow('实际参考人数（人）',         m => m.total);
-  dataRow('全卷通过率（%）',            m => m.allPassRate);
-  dataRow('全卷通过人数（人）',         m => m.allPass);
-  dataRow('不合格人数（人）',           m => m.total - m.allPass - m.gradeCounts[0] - m.gradeCounts[1] - m.gradeCounts[2]);
-  dataRow('合格人数 60-74分（人）',     m => m.gradeCounts[2]);
-  dataRow('良好人数 75-89分（人）',     m => m.gradeCounts[1]);
-  dataRow('优秀人数 ≥90分（人）',       m => m.gradeCounts[0]);
-  dataRow('客观题均分',                 m => m.allObjAvg);
-  dataRow('操作题均分',                 m => m.allSubAvg);
-  dataRow('卷面均分',                   m => m.allVolAvg);
+    sec('基础指标');
+    row4('实际参考人数（人）',   m.total,             m.aicTotal,          m.cppTotal);
+    row4('考生占比',             '100%',              m.aicRatio + '%',    m.cppRatio + '%');
+    row4('全卷通过率',           m.allPassRate + '%', m.aicPassRate + '%', m.cppPassRate + '%');
+    row4('通过人数（人）',       m.allPass,           m.aicPass,           m.cppPass);
+    row4('不合格人数（人）',
+      m.total    - m.allPass - m.gradeCounts[0] - m.gradeCounts[1] - m.gradeCounts[2],
+      m.aicTotal - m.aicPass - m.aicGrades[0]  - m.aicGrades[1]  - m.aicGrades[2],
+      m.cppTotal - m.cppPass - m.cppGrades[0]  - m.cppGrades[1]  - m.cppGrades[2]);
+    row4('合格人数 60-74（人）', m.gradeCounts[2],    m.aicGrades[2],      m.cppGrades[2]);
+    row4('良好人数 75-89（人）', m.gradeCounts[1],    m.aicGrades[1],      m.cppGrades[1]);
+    row4('优秀人数 ≥90（人）',   m.gradeCounts[0],    m.aicGrades[0],      m.cppGrades[0]);
 
-  section('【AIC++学员】');
-  dataRow('AIC++ 人数（人）',           m => m.aicTotal);
-  dataRow('AIC++ 占比（%）',            m => m.aicRatio);
-  dataRow('AIC++ 通过率（%）',          m => m.aicPassRate);
-  dataRow('AIC++ 通过人数（人）',       m => m.aicPass);
-  dataRow('AIC++ 不合格（人）',         m => m.aicTotal - m.aicPass - m.aicGrades[0] - m.aicGrades[1] - m.aicGrades[2]);
-  dataRow('AIC++ 合格 60-74（人）',     m => m.aicGrades[2]);
-  dataRow('AIC++ 良好 75-89（人）',     m => m.aicGrades[1]);
-  dataRow('AIC++ 优秀 ≥90（人）',       m => m.aicGrades[0]);
-  dataRow('AIC++ 客观题均分',           m => m.aicObjAvg);
-  dataRow('AIC++ 操作题均分',           m => m.aicSubAvg);
-  dataRow('AIC++ 卷面均分',             m => m.aicVolAvg);
+    sec('均分');
+    row4('客观题均分', m.allObjAvg, m.aicObjAvg, m.cppObjAvg);
+    row4('操作题均分', m.allSubAvg, m.aicSubAvg, m.cppSubAvg);
+    row4('卷面均分',   m.allVolAvg, m.aicVolAvg, m.cppVolAvg);
 
-  section('【C++小班学员】');
-  dataRow('C++小班 人数（人）',         m => m.cppTotal);
-  dataRow('C++小班 占比（%）',          m => m.cppRatio);
-  dataRow('C++小班 通过率（%）',        m => m.cppPassRate);
-  dataRow('C++小班 通过人数（人）',     m => m.cppPass);
-  dataRow('C++小班 不合格（人）',       m => m.cppTotal - m.cppPass - m.cppGrades[0] - m.cppGrades[1] - m.cppGrades[2]);
-  dataRow('C++小班 合格 60-74（人）',   m => m.cppGrades[2]);
-  dataRow('C++小班 良好 75-89（人）',   m => m.cppGrades[1]);
-  dataRow('C++小班 优秀 ≥90（人）',     m => m.cppGrades[0]);
-  dataRow('C++小班 客观题均分',         m => m.cppObjAvg);
-  dataRow('C++小班 操作题均分',         m => m.cppSubAvg);
-  dataRow('C++小班 卷面均分',           m => m.cppVolAvg);
+    sec('每道题统计');
+    aoa1.push(['题目', '全体', 'AIC++', 'C++小班']);
+    qNames.forEach(qname => {
+      const {type} = qs[qname];
+      const unit = type === 'rate' ? '正确率' : '均分';
+      const fmt = (m, key) => { const q = m.qStats[qname]; return q ? (type === 'rate' ? q[key] + '%' : q[key]) : ''; };
+      row4(qname + '（' + unit + '）', fmt(m,'val'), fmt(m,'aicVal'), fmt(m,'cppVal'));
+    });
 
-  // 每道题：三行（全体/AIC++/C++小班）
-  section('【每道题统计】');
-  qNames.forEach(qname => {
-    const {type} = qs[qname];
-    const unit = type === 'rate' ? '正确率（%）' : '均分';
-    const fmt = (m, key) => { const q = m.qStats[qname]; return q ? q[key] : ''; };
-    addRow1(`${qname} 全体${unit}`,    datasets.map(([,m]) => fmt(m, 'val')));
-    addRow1(`${qname} AIC++${unit}`,   datasets.map(([,m]) => fmt(m, 'aicVal')));
-    addRow1(`${qname} C++小班${unit}`, datasets.map(([,m]) => fmt(m, 'cppVal')));
+    aoa1.push(['', '', '', '']); // 场次间空行
   });
 
   const ws1 = XLSX.utils.aoa_to_sheet(aoa1);
-
-  // 列宽：第一列宽，其余等宽
-  ws1['!cols'] = [{ wch: 28 }, ...datasets.map(() => ({ wch: 18 }))];
-
-  // 冻结首行首列
-  ws1['!freeze'] = { xSplit: 1, ySplit: 1 };
-
+  ws1['!cols'] = [{ wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, ws1, '分析结果');
 
-  // ── Sheet 2：复制粘贴（纯数字，带标签列，方便粘贴到模板） ────────────
-  // 行=指标，列=各数据集，第一列为指标标签
-  const aoa2 = [['指标', ...datasets.map(([label]) => label)]];
-  const addRow2 = (label, fn) => aoa2.push([label, ...datasets.map(([,m]) => fn(m))]);
-
-  qNames.forEach(qname => {
-    const {type} = qs[qname];
-    const unit = type === 'rate' ? '正确率%' : '均分';
-    addRow2(`${qname} 全体${unit}`,    m => { const q = m.qStats[qname]; return q ? q.val : ''; });
-    addRow2(`${qname} AIC++${unit}`,   m => { const q = m.qStats[qname]; return q ? q.aicVal : ''; });
-    addRow2(`${qname} C++小班${unit}`, m => { const q = m.qStats[qname]; return q ? q.cppVal : ''; });
+  // ── Sheet 2：复制粘贴（纯数字，同结构） ──────────────────────────────
+  const aoa2 = [];
+  datasets.forEach(([label, m]) => {
+    aoa2.push([label, '全体', 'AIC++', 'C++小班']);
+    qNames.forEach(qname => {
+      const {type} = qs[qname];
+      const unit = type === 'rate' ? '正确率%' : '均分';
+      const raw = (m, key) => { const q = m.qStats[qname]; return q ? q[key] : ''; };
+      aoa2.push([qname + '（' + unit + '）', raw(m,'val'), raw(m,'aicVal'), raw(m,'cppVal')]);
+    });
+    aoa2.push(['全卷通过率%',  m.allPassRate,  m.aicPassRate,  m.cppPassRate]);
+    aoa2.push(['通过人数',     m.allPass,      m.aicPass,      m.cppPass]);
+    aoa2.push(['实际参考人数', m.total,        m.aicTotal,     m.cppTotal]);
+    aoa2.push(['考生占比%',    100,            m.aicRatio,     m.cppRatio]);
+    aoa2.push(['', '', '', '']);
   });
-  addRow2('全卷通过率%',      m => m.allPassRate);
-  addRow2('AIC++通过率%',     m => m.aicPassRate);
-  addRow2('C++小班通过率%',   m => m.cppPassRate);
-  addRow2('实际参考人数',     m => m.total);
-  addRow2('AIC++人数',        m => m.aicTotal);
-  addRow2('AIC++占比%',       m => m.aicRatio);
-  addRow2('C++小班人数',      m => m.cppTotal);
-  addRow2('C++小班占比%',     m => m.cppRatio);
 
   const ws2 = XLSX.utils.aoa_to_sheet(aoa2);
-  ws2['!cols'] = [{ wch: 28 }, ...datasets.map(() => ({ wch: 16 }))];
+  ws2['!cols'] = [{ wch: 26 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
   XLSX.utils.book_append_sheet(wb, ws2, '复制粘贴');
 
   XLSX.writeFile(wb, 'result.xlsx');
