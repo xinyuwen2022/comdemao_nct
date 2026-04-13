@@ -89,7 +89,10 @@
     </div>
   </div>
 
-  <button class="btn-analyze" id="btnAnalyze" onclick="analyze()">开始分析</button>
+  <div style="display:flex;gap:12px;margin-bottom:24px">
+    <button class="btn-analyze" id="btnAnalyze" onclick="analyze()" style="margin-bottom:0;flex:1">开始分析</button>
+    <button onclick="resetAll()" style="padding:14px 24px;background:white;border:2px solid #cbd5e0;border-radius:10px;font-size:15px;font-weight:600;color:#718096;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='#a0aec0';this.style.color='#4a5568'" onmouseout="this.style.borderColor='#cbd5e0';this.style.color='#718096'">↺ 重新上传</button>
+  </div>
 
   <div class="error-box" id="errorBox"></div>
   <div class="loading" id="loading"><div class="spinner"></div><div style="color:#718096;font-size:14px">正在分析中，请稍候…</div></div>
@@ -467,6 +470,22 @@ async function analyze() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('btnAnalyze').disabled = false;
   }
+}
+
+function resetAll() {
+  file1Data = null; file2Data = null;
+  lastSessionMetrics = []; lastObjCols = []; lastSubCols = []; lastMTotal = null;
+  ['drop1','drop2'].forEach(id => {
+    document.getElementById(id).classList.remove('has-file','drag-over');
+  });
+  document.getElementById('name1').textContent = '';
+  document.getElementById('name2').textContent = '';
+  document.getElementById('file1').value = '';
+  document.getElementById('file2').value = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('btnAnalyze').disabled = false;
+  hideError();
 }
 
 function downloadExcel() {
