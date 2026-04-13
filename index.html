@@ -182,45 +182,36 @@ function parseScoreSheet(rows) {
 function normSession(s) { return String(s).replace(/[:：]/g, '-').trim(); }
 
 function matchSessions(userRows, scoreSheets) {
-  const sessionColName = ['场次名称','场次','考试场次'].find(c => userRows[0] && c in userRows[0]);
-  const normMap = {};
-  Object.entries(scoreSheets).forEach(([k, v]) => { normMap[normSession(k)] = { key: k, rows: v }; });
-  const pairs = [];
-  if (sessionColName) {
-    const groups = {};
-    userRows.forEach(r => {
-      const sn = String(r[sessionColName] || '');
-      if (!groups[sn]) groups[sn] = [];
-      groups[sn].push(r);
-    });
-    Object.entries(groups).forEach(([sn, uRows]) => {
-      const matched = normMap[normSession(sn)];
-      pairs.push({ name: sn, userRows: uRows, scoreRows: matched ? matched.rows : null });
-    });
-  } else {
-    Object.entries(scoreSheets).forEach(([k, rows]) => {
-      pairs.push({ name: k, userRows: [...userRows], scoreRows: rows });
-    });
-  }
-  return pairs;
+  // 以成绩明细 Sheet 为主，每个 Sheet 对应一个场次
+  // userRows 仅用于后续 joinScores 中补充渠道字段
+  return Object.entries(scoreSheets).map(([k, rows]) => ({
+    name: k,
+    userRows: userRows,
+    scoreRows: rows
+  }));
 }
 
 function joinScores(userRows, scoreRows, objCols, subCols) {
-  if (!scoreRows) return userRows.map(r => ({...r}));
-  const lookup = {};
-  scoreRows.forEach(r => { if (r[CERT_COL] != null) lookup[String(r[CERT_COL]).trim()] = r; });
-  return userRows.map(u => {
-    const key = String(u[CERT_COL] || '').trim();
-    const s = lookup[key];
-    const merged = {...u};
-    if (s) {
-      objCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
-      subCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
-      if (objCols.length) merged['客观题得分'] = objCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
-      if (subCols.length) merged['主观题得分'] = subCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
-      const all = [...objCols, ...subCols];
-      if (all.length) merged['卷面成绩'] = all.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
-    }
+  // 以成绩明细为主表，left join 总表只取渠道字段
+  if (!scoreRows) return [];
+  // 构建总表准考证号 -> 渠道的 lookup
+  const channelLookup = {};
+  userRows.forEach(u => {
+    const k = String(u[CERT_COL] || '').trim();
+    if (k) channelLookup[k] = u[GROUP_COL] || '非AIC++';
+  });
+  return scoreRows.map(s => {
+    const merged = {...s};
+    const key = String(s[CERT_COL] || '').trim();
+    // 补充渠道字段，匹配不到默认非AIC++
+    merged[GROUP_COL] = channelLookup[key] || '非AIC++';
+    // 强制转数值
+    objCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+    subCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+    if (objCols.length) merged['客观题得分'] = objCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+    if (subCols.length) merged['主观题得分'] = subCols.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
+    const all = [...objCols, ...subCols];
+    if (all.length) merged['卷面成绩'] = all.reduce((a, c) => a + (parseFloat(s[c]) || 0), 0);
     if (merged['卷面成绩'] != null) merged['通过状态'] = scoreStatus(merged['卷面成绩']);
     return merged;
   });
@@ -235,9 +226,10 @@ function scoreStatus(s) {
 }
 
 function cleanData(rows) {
+  // 主表为成绩明细，缺考字段为「缺考标记」，只保留值为「正常」的记录
   return rows.filter(r => {
-    const absent = Object.keys(r).find(k => k.includes('缺考'));
-    if (absent && String(r[absent]).includes('缺考')) return false;
+    const absentKey = Object.keys(r).find(k => k.includes('缺考'));
+    if (absentKey && String(r[absentKey]).trim() !== '正常') return false;
     const name = String(r['考生姓名'] || '');
     if (/测试|备用|test/i.test(name)) return false;
     return true;
@@ -410,10 +402,12 @@ async function analyze() {
     const allCleanedRows = [];
 
     for (const pair of pairs) {
-      const sheetInfo = parsedSheets[pair.name] || Object.values(parsedSheets)[0] || { rows: [], objCols: globalObjCols, subCols: globalSubCols };
+      // 以成绩明细 Sheet 为主，每个 pair 都有 scoreRows
+      const sheetInfo = parsedSheets[pair.name] || { rows: [], objCols: globalObjCols, subCols: globalSubCols };
       const objCols = sheetInfo.objCols.length ? sheetInfo.objCols : globalObjCols;
       const subCols = sheetInfo.subCols.length ? sheetInfo.subCols : globalSubCols;
 
+      // joinScores：成绩明细 left join 总表渠道字段
       const joined = joinScores(pair.userRows, pair.scoreRows, objCols, subCols);
       const beforeClean = joined.length;
       const cleaned = cleanData(joined);
@@ -528,3 +522,4 @@ function downloadExcel() {
 </script>
 </body>
 </html>
+
