@@ -272,21 +272,39 @@ function computeMetrics(rows, objCols, subCols) {
   const aicPass = passCount(aic);
   const cppPass = passCount(cpp);
 
+  // 每道题：整体 + AIC++ + C++小班 各自通过率/均分
   const qStats = {};
   objCols.forEach((c, i) => {
-    const vals = rows.map(r => parseFloat(r[c]) || 0);
-    const passN = vals.filter(v => v > 0).length;
-    qStats['客观第' + (i+1) + '题'] = { type: 'rate', val: pctNum(passN, total) };
+    const label = '客观第' + (i+1) + '题';
+    function objRate(sub) {
+      const vals = sub.map(r => parseFloat(r[c]) || 0);
+      return pctNum(vals.filter(v => v > 0).length, sub.length);
+    }
+    qStats[label] = {
+      type: 'rate',
+      val:    objRate(rows),
+      aicVal: objRate(aic),
+      cppVal: objRate(cpp)
+    };
   });
   subCols.forEach((c, j) => {
-    const vals = rows.map(r => parseFloat(r[c]) || 0);
-    const mean = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
-    qStats['主观第' + (j+1) + '题'] = { type: 'avg', val: parseFloat(mean.toFixed(2)) };
+    const label = '主观第' + (j+1) + '题';
+    function subAvg(sub) {
+      const vals = sub.map(r => parseFloat(r[c]) || 0);
+      return vals.length ? parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)) : 0;
+    }
+    qStats[label] = {
+      type: 'avg',
+      val:    subAvg(rows),
+      aicVal: subAvg(aic),
+      cppVal: subAvg(cpp)
+    };
   });
 
   return {
     total, allPass, allPassRate: pctNum(allPass, total),
     gradeCounts: gradeCounts(rows),
+    allObjAvg: avg(rows, '客观题得分'), allSubAvg: avg(rows, '主观题得分'), allVolAvg: avg(rows, '卷面成绩'),
     aicTotal: aic.length, aicPass, aicRatio: pctNum(aic.length, total), aicPassRate: pctNum(aicPass, aic.length),
     aicGrades: gradeCounts(aic), aicObjAvg: avg(aic, '客观题得分'), aicSubAvg: avg(aic, '主观题得分'), aicVolAvg: avg(aic, '卷面成绩'),
     cppTotal: cpp.length, cppPass, cppRatio: pctNum(cpp.length, total), cppPassRate: pctNum(cppPass, cpp.length),
@@ -327,28 +345,41 @@ function gradeStr(g) { return `优秀 ${g[0]} / 良好 ${g[1]} / 合格 ${g[2]}`
 
 function renderSessionCard(name, m, removed, objCols, subCols, isTotal = false) {
   const removeNote = removed > 0 ? `<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>` : '';
+
+  // 每道题：三列表格（全体 / AIC++ / C++小班）
   let qHtml = '';
   if (Object.keys(m.qStats).length) {
-    qHtml = '<div class="q-grid">';
-    Object.entries(m.qStats).forEach(([qname, {type, val}]) => {
-      qHtml += `<div class="q-item"><div class="q-name">${qname}</div><div class="q-val">${type==='rate' ? val+'%' : val}</div><div class="q-type">${type==='rate' ? '通过率' : '均分'}</div></div>`;
+    qHtml = `<div style="margin-top:16px">
+      <div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div>
+      <table class="metrics-table">
+        <tr><th>题目</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>`;
+    Object.entries(m.qStats).forEach(([qname, {type, val, aicVal, cppVal}]) => {
+      const fmt = v => type === 'rate' ? v + '%' : v;
+      const unit = type === 'rate' ? '正确率' : '均分';
+      qHtml += `<tr>
+        <td>${qname}<span style="font-size:11px;color:#a0aec0;margin-left:4px">${unit}</span></td>
+        <td>${fmt(val)}</td>
+        <td>${fmt(aicVal)}</td>
+        <td>${fmt(cppVal)}</td>
+      </tr>`;
     });
-    qHtml += '</div>';
+    qHtml += '</table></div>';
   }
+
   return `<div class="session-card">
     <div class="session-title">${isTotal ? '📊 ' : '📋 '}${name} ${removeNote}</div>
     <table class="metrics-table">
       <tr><th>指标</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>
       <tr class="section-row"><td colspan="4">── 基础指标 ──</td></tr>
       <tr><td>参考人数</td><td>${m.total} 人</td><td>${m.aicTotal} 人（${m.aicRatio}%）</td><td>${m.cppTotal} 人（${m.cppRatio}%）</td></tr>
-      <tr><td>通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%</span></td><td><span class="badge ${m.aicPassRate>=60?'badge-pass':'badge-fail'}">${m.aicPassRate}%</span></td><td><span class="badge ${m.cppPassRate>=60?'badge-pass':'badge-fail'}">${m.cppPassRate}%</span></td></tr>
+      <tr><td>全卷通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%（${m.allPass}人）</span></td><td><span class="badge ${m.aicPassRate>=60?'badge-pass':'badge-fail'}">${m.aicPassRate}%（${m.aicPass}人）</span></td><td><span class="badge ${m.cppPassRate>=60?'badge-pass':'badge-fail'}">${m.cppPassRate}%（${m.cppPass}人）</span></td></tr>
       <tr><td>优/良/合格人数</td><td>${gradeStr(m.gradeCounts)}</td><td>${gradeStr(m.aicGrades)}</td><td>${gradeStr(m.cppGrades)}</td></tr>
       <tr class="section-row"><td colspan="4">── 均分 ──</td></tr>
-      <tr><td>客观题均分</td><td>—</td><td>${m.aicObjAvg}</td><td>${m.cppObjAvg}</td></tr>
-      <tr><td>主观题均分</td><td>—</td><td>${m.aicSubAvg}</td><td>${m.cppSubAvg}</td></tr>
-      <tr><td>卷面均分</td><td>—</td><td>${m.aicVolAvg}</td><td>${m.cppVolAvg}</td></tr>
+      <tr><td>客观题均分</td><td>${m.allObjAvg}</td><td>${m.aicObjAvg}</td><td>${m.cppObjAvg}</td></tr>
+      <tr><td>主观题均分</td><td>${m.allSubAvg}</td><td>${m.aicSubAvg}</td><td>${m.cppSubAvg}</td></tr>
+      <tr><td>卷面均分</td><td>${m.allVolAvg}</td><td>${m.aicVolAvg}</td><td>${m.cppVolAvg}</td></tr>
     </table>
-    ${qHtml ? '<div style="margin-top:16px"><div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div>' + qHtml + '</div>' : ''}
+    ${qHtml}
   </div>`;
 }
 
