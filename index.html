@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>成绩单分析系统</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
@@ -197,7 +198,6 @@ function handleFile(f,n) {
 function showError(msg){const b=document.getElementById('errorBox');b.textContent='⚠️ '+msg;b.style.display='block';}
 function hideError(){document.getElementById('errorBox').style.display='none';}
 function readWorkbook(buf){return XLSX.read(new Uint8Array(buf),{type:'array',cellDates:true});}
-function writeWorkbook(wb,name){XLSX.writeFile(wb,name,{cellStyles:true});}
 
 function sheetToRows(ws) {
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
@@ -361,27 +361,36 @@ async function analyze(){
   finally{document.getElementById('loading').style.display='none';document.getElementById('btnAnalyze').disabled=false;}
 }
 
-function centerAllCells(ws){
-  if(!ws['!ref'])return;
-  const range=XLSX.utils.decode_range(ws['!ref']);
-  for(let R=range.s.r;R<=range.e.r;R++){
-    for(let C=range.s.c;C<=range.e.c;C++){
-      const addr=XLSX.utils.encode_cell({r:R,c:C});
-      if(!ws[addr])continue;
-      if(!ws[addr].s)ws[addr].s={};
-      ws[addr].s.alignment={horizontal:'center',vertical:'center',wrapText:true};
-    }
-  }
+// ── ExcelJS 工具：将二维数组写入 worksheet 并全部居中 ──────────
+function aoaToExcelJsSheet(wb, sheetName, aoa, colWidths) {
+  const ws = wb.addWorksheet(sheetName);
+  if (colWidths) ws.columns = colWidths.map(w => ({ width: w }));
+  const center = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  aoa.forEach(rowData => {
+    const row = ws.addRow(rowData);
+    row.eachCell({ includeEmpty: true }, cell => { cell.alignment = center; });
+  });
 }
 
-function downloadExcel(){
-  const wb=XLSX.utils.book_new();
+async function saveExcelJs(wb, filename) {
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+async function downloadExcel(){
   const datasets=[];
   lastSessionMetrics.forEach(({name,m})=>datasets.push([name,m]));
   if(lastMTotal&&lastSessionMetrics.length>1)datasets.push(['汇总（所有场次）',lastMTotal]);
   if(!datasets.length)return;
   const qs=datasets[0][1].qStats,qNames=Object.keys(qs);
-  const aoa1=[],sec=l=>aoa1.push(['── '+l+' ──','','','']),row4=(l,a,b,c)=>aoa1.push([l,a,b,c]);
+
+  const aoa1=[];
+  const sec=l=>aoa1.push(['── '+l+' ──','','','']);
+  const row4=(l,a,b,c)=>aoa1.push([l,a,b,c]);
   datasets.forEach(([label,m])=>{
     aoa1.push([label,'全体','AIC++','C++小班']);
     sec('基础指标');
@@ -405,9 +414,7 @@ function downloadExcel(){
     });
     aoa1.push(['','','','']);
   });
-  const ws1=XLSX.utils.aoa_to_sheet(aoa1);ws1['!cols']=[{wch:26},{wch:16},{wch:16},{wch:16}];
-  centerAllCells(ws1);
-  XLSX.utils.book_append_sheet(wb,ws1,'分析结果');
+
   const aoa2=[];
   datasets.forEach(([label,m])=>{
     aoa2.push([label,'全体','AIC++','C++小班']);
@@ -418,10 +425,11 @@ function downloadExcel(){
     aoa2.push(['考生占比%',100,m.aicRatio,m.cppRatio]);
     aoa2.push(['','','','']);
   });
-  const ws2=XLSX.utils.aoa_to_sheet(aoa2);ws2['!cols']=[{wch:26},{wch:14},{wch:14},{wch:14}];
-  centerAllCells(ws2);
-  XLSX.utils.book_append_sheet(wb,ws2,'复制粘贴');
-  writeWorkbook(wb,'result.xlsx');
+
+  const wb=new ExcelJS.Workbook();
+  aoaToExcelJsSheet(wb,'分析结果',aoa1,[26,16,16,16]);
+  aoaToExcelJsSheet(wb,'复制粘贴',aoa2,[26,14,14,14]);
+  await saveExcelJs(wb,'result.xlsx');
 }
 
 // ── 单表统计 ─────────────────────────────────────────────────
@@ -516,8 +524,7 @@ async function analyzeSingle(){
   finally{document.getElementById('loading').style.display='none';document.getElementById('btnAnalyzeSingle').disabled=false;}
 }
 
-function downloadExcelSingle(){
-  const wb=XLSX.utils.book_new();
+async function downloadExcelSingle(){
   const datasets=[];
   lastSessionMetrics.forEach(({name,m})=>datasets.push([name,m]));
   if(lastMTotal&&lastSessionMetrics.length>1)datasets.push(['汇总（所有场次）',lastMTotal]);
@@ -536,10 +543,9 @@ function downloadExcelSingle(){
     qNames.forEach(qn=>{const{type,val}=m.qStats[qn];aoa.push([qn+'（'+(type==='rate'?'正确率':'均分')+'）',type==='rate'?val+'%':val]);});
     aoa.push(['','']);
   });
-  const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:26},{wch:16}];
-  centerAllCells(ws);
-  XLSX.utils.book_append_sheet(wb,ws,'统计结果');
-  writeWorkbook(wb,'result_single.xlsx');
+  const wb=new ExcelJS.Workbook();
+  aoaToExcelJsSheet(wb,'统计结果',aoa,[26,16]);
+  await saveExcelJs(wb,'result_single.xlsx');
 }
 
 // ── Python AI 单表（含判断题）────────────────────────────────
@@ -655,8 +661,7 @@ async function analyzePython(){
   finally{document.getElementById('loading').style.display='none';document.getElementById('btnAnalyzePython').disabled=false;}
 }
 
-function downloadExcelPython(){
-  const wb=XLSX.utils.book_new();
+async function downloadExcelPython(){
   const datasets=[];
   lastPyMetrics.forEach(({name,m})=>datasets.push([name,m]));
   if(lastPyMTotal&&lastPyMetrics.length>1)datasets.push(['汇总（所有场次）',lastPyMTotal]);
@@ -677,10 +682,9 @@ function downloadExcelPython(){
     qNames.forEach(qn=>{const{type,val}=m.qStats[qn];aoa.push([qn+'（'+(type==='rate'?'正确率':'均分')+'）',type==='rate'?val+'%':val]);});
     aoa.push(['','']);
   });
-  const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:26},{wch:16}];
-  centerAllCells(ws);
-  XLSX.utils.book_append_sheet(wb,ws,'统计结果');
-  writeWorkbook(wb,'result_python.xlsx');
+  const wb=new ExcelJS.Workbook();
+  aoaToExcelJsSheet(wb,'统计结果',aoa,[26,16]);
+  await saveExcelJs(wb,'result_python.xlsx');
 }
 
 // ── 重置 ────────────────────────────────────────────────────
