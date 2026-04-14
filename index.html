@@ -73,38 +73,37 @@
 <div class="tab-bar">
   <button class="tab active" id="tab-dual" onclick="switchTab('dual')">📊 双表分析（分渠道）</button>
   <button class="tab" id="tab-single" onclick="switchTab('single')">📋 单表统计（仅成绩）</button>
-  <button class="tab" id="tab-ai" onclick="switchTab('ai')">🤖 Python AI（含判断题）</button>
+  <button class="tab" id="tab-python" onclick="switchTab('python')">🐍 Python AI（含判断题）</button>
 </div>
 <div class="container">
-
   <!-- ── 双表分析 ── -->
   <div id="section-dual">
-    <div class="upload-section">
-      <div class="upload-card">
-        <h3>📋 用户总表</h3>
-        <p>含「是否为AIC++学员」字段的 Excel 文件</p>
-        <div class="drop-zone" id="drop1">
-          <input type="file" id="file1" accept=".xlsx,.xls,.csv">
-          <div class="drop-icon">📁</div>
-          <div class="drop-text">拖拽文件到此处，或<strong>点击选择</strong></div>
-          <div class="file-name" id="name1"></div>
-        </div>
-      </div>
-      <div class="upload-card">
-        <h3>📝 成绩明细</h3>
-        <p>含多个场次 Sheet 的 Excel 文件</p>
-        <div class="drop-zone" id="drop2">
-          <input type="file" id="file2" accept=".xlsx,.xls">
-          <div class="drop-icon">📁</div>
-          <div class="drop-text">拖拽文件到此处，或<strong>点击选择</strong></div>
-          <div class="file-name" id="name2"></div>
-        </div>
+  <div class="upload-section">
+    <div class="upload-card">
+      <h3>📋 用户总表</h3>
+      <p>含「是否为AIC++学员」字段的 Excel 文件</p>
+      <div class="drop-zone" id="drop1">
+        <input type="file" id="file1" accept=".xlsx,.xls,.csv">
+        <div class="drop-icon">📁</div>
+        <div class="drop-text">拖拽文件到此处，或<strong>点击选择</strong></div>
+        <div class="file-name" id="name1"></div>
       </div>
     </div>
-    <div style="display:flex;gap:12px;margin-bottom:24px">
-      <button class="btn-analyze" id="btnAnalyze" onclick="analyze()" style="margin-bottom:0;flex:1">开始分析</button>
-      <button onclick="resetAll()" style="padding:14px 24px;background:white;border:2px solid #cbd5e0;border-radius:10px;font-size:15px;font-weight:600;color:#718096;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='#a0aec0';this.style.color='#4a5568'" onmouseout="this.style.borderColor='#cbd5e0';this.style.color='#718096'">↺ 重新上传</button>
+    <div class="upload-card">
+      <h3>📝 成绩明细</h3>
+      <p>含多个场次 Sheet 的 Excel 文件</p>
+      <div class="drop-zone" id="drop2">
+        <input type="file" id="file2" accept=".xlsx,.xls">
+        <div class="drop-icon">📁</div>
+        <div class="drop-text">拖拽文件到此处，或<strong>点击选择</strong></div>
+        <div class="file-name" id="name2"></div>
+      </div>
     </div>
+  </div>
+  <div style="display:flex;gap:12px;margin-bottom:24px">
+    <button class="btn-analyze" id="btnAnalyze" onclick="analyze()" style="margin-bottom:0;flex:1">开始分析</button>
+    <button onclick="resetAll()" style="padding:14px 24px;background:white;border:2px solid #cbd5e0;border-radius:10px;font-size:15px;font-weight:600;color:#718096;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='#a0aec0';this.style.color='#4a5568'" onmouseout="this.style.borderColor='#cbd5e0';this.style.color='#718096'">↺ 重新上传</button>
+  </div>
   </div>
 
   <!-- ── 单表统计 ── -->
@@ -128,7 +127,7 @@
   </div>
 
   <!-- ── Python AI（含判断题）── -->
-  <div id="section-ai" style="display:none">
+  <div id="section-python" style="display:none">
     <div class="upload-section">
       <div class="upload-card">
         <h3>📋 用户总表</h3>
@@ -141,8 +140,8 @@
         </div>
       </div>
       <div class="upload-card">
-        <h3>📝 成绩明细（含判断题）</h3>
-        <p>Python AI 考试的成绩明细，含判断题列</p>
+        <h3>📝 Python AI 成绩明细</h3>
+        <p>含单选题、判断题、编程题的 Excel 文件</p>
         <div class="drop-zone" id="drop5">
           <input type="file" id="file5" accept=".xlsx,.xls">
           <div class="drop-icon">📁</div>
@@ -152,7 +151,7 @@
       </div>
     </div>
     <div style="display:flex;gap:12px;margin-bottom:24px">
-      <button class="btn-analyze" id="btnAnalyzeAI" onclick="analyzeAI()" style="margin-bottom:0;flex:1">开始分析</button>
+      <button class="btn-analyze" id="btnAnalyzePython" onclick="analyzePython()" style="margin-bottom:0;flex:1">开始分析</button>
       <button onclick="resetAll()" style="padding:14px 24px;background:white;border:2px solid #cbd5e0;border-radius:10px;font-size:15px;font-weight:600;color:#718096;cursor:pointer;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='#a0aec0';this.style.color='#4a5568'" onmouseout="this.style.borderColor='#cbd5e0';this.style.color='#718096'">↺ 重新上传</button>
     </div>
   </div>
@@ -181,42 +180,34 @@ let file4Data = null, file5Data = null;
 let currentTab = 'dual';
 
 let lastSessionMetrics = [], lastObjCols = [], lastSubCols = [], lastMTotal = null;
-let lastAISessionMetrics = [], lastAIObjCols = [], lastAIJudgeCols = [], lastAISubCols = [], lastAIMTotal = null;
+let lastPythonSessionMetrics = [], lastPythonObjCols = [], lastPythonJudgeCols = [], lastPythonSubCols = [], lastPythonMTotal = null;
 
-// ── Tab switching ──────────────────────────────────────
+// ── Tab 切换 ──────────────────────────────────────────────────
 function switchTab(tab) {
   currentTab = tab;
   document.getElementById('section-dual').style.display   = tab === 'dual'   ? '' : 'none';
   document.getElementById('section-single').style.display = tab === 'single' ? '' : 'none';
-  document.getElementById('section-ai').style.display     = tab === 'ai'     ? '' : 'none';
+  document.getElementById('section-python').style.display = tab === 'python' ? '' : 'none';
   document.getElementById('results').style.display = 'none';
   hideError();
   document.getElementById('tab-dual').classList.toggle('active',   tab === 'dual');
   document.getElementById('tab-single').classList.toggle('active', tab === 'single');
-  document.getElementById('tab-ai').classList.toggle('active',     tab === 'ai');
+  document.getElementById('tab-python').classList.toggle('active', tab === 'python');
 }
 
-// ── Drag & drop setup ─────────────────────────────────
-function setupDrop(dropId, fileId, fileIdx) {
-  const zone  = document.getElementById(dropId);
-  const input = document.getElementById(fileId);
-  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0]; if (f) handleFile(f, fileIdx);
-  });
-  input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0], fileIdx); });
-}
-setupDrop('drop1','file1',1);
-setupDrop('drop2','file2',2);
-setupDrop('drop3','file3',3);
-setupDrop('drop4','file4',4);
-setupDrop('drop5','file5',5);
+// ── 文件拖拽 / 选择 ───────────────────────────────────────────
+[1,2,3,4,5].forEach(n => {
+  const zone  = document.getElementById('drop' + n);
+  const input = document.getElementById('file' + n);
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) handleFile(f, n); });
+  input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0], n); });
+});
 
 function handleFile(f, n) {
-  document.getElementById('name'+n).textContent = '✅ ' + f.name;
-  document.getElementById('drop'+n).classList.add('has-file');
+  document.getElementById('name' + n).textContent = '✅ ' + f.name;
+  document.getElementById('drop' + n).classList.add('has-file');
   const reader = new FileReader();
   reader.onload = e => {
     const d = { name: f.name, buf: e.target.result };
@@ -257,63 +248,13 @@ function sheetToRows(ws) {
   });
 }
 
-// ── Score sheet parsers ───────────────────────────────
-function parseScoreSheet(rows) {
-  if (!rows.length) return { rows, objCols: [], subCols: [] };
-  const headers  = Object.keys(rows[0]);
-  const dataCols = headers.filter(h => !META_COLS.has(h) && h !== '');
-  let data = rows;
-  if (dataCols.length > 0) {
-    const firstVal = String(rows[0][dataCols[0]] || '').trim();
-    if (/^\d+$/.test(firstVal)) data = rows.slice(1);
-  }
-  const objCols = headers.filter(h => h.includes('单项') || (h.includes('选择') && !h.includes('编程')));
-  const subCols = headers.filter(h => h.includes('编程') || h.includes('操作'));
-  data = data.map(r => {
-    const nr = { ...r };
-    [...objCols, ...subCols].forEach(c => { nr[c] = parseFloat(nr[c]) || 0; });
-    return nr;
-  });
-  return { rows: data, objCols, subCols };
-}
-
-// AI 版：多识别一类判断题列
-function parseScoreSheetAI(rows) {
-  if (!rows.length) return { rows, objCols: [], judgeCols: [], subCols: [] };
-  const headers  = Object.keys(rows[0]);
-  const dataCols = headers.filter(h => !META_COLS.has(h) && h !== '');
-  let data = rows;
-  if (dataCols.length > 0) {
-    const firstVal = String(rows[0][dataCols[0]] || '').trim();
-    if (/^\d+$/.test(firstVal)) data = rows.slice(1);
-  }
-  const objCols   = headers.filter(h => h.includes('单项') || (h.includes('选择') && !h.includes('编程')));
-  const judgeCols = headers.filter(h => h.includes('判断'));
-  const subCols   = headers.filter(h => h.includes('编程') || h.includes('操作'));
-  data = data.map(r => {
-    const nr = { ...r };
-    [...objCols, ...judgeCols, ...subCols].forEach(c => { nr[c] = parseFloat(nr[c]) || 0; });
-    return nr;
-  });
-  return { rows: data, objCols, judgeCols, subCols };
-}
-
-// ── Shared helpers ────────────────────────────────────
+// ── 通用工具 ─────────────────────────────────────────────────
 function scoreStatus(s) {
   const n = parseFloat(s) || 0;
   if (n >= SCORE_EXCELLENT) return '优秀';
   if (n >= SCORE_GOOD)      return '良好';
   if (n >= SCORE_PASS)      return '合格';
   return '不合格';
-}
-
-function cleanData(rows) {
-  return rows.filter(r => {
-    const absentKey = Object.keys(r).find(k => k.includes('缺考'));
-    if (absentKey && String(r[absentKey]).trim() !== '正常') return false;
-    if (/测试|备用|test/i.test(String(r['考生姓名'] || ''))) return false;
-    return true;
-  });
 }
 
 function avg(rows, col) {
@@ -325,158 +266,137 @@ function avg(rows, col) {
 function pct(a, b)    { return b ? (a / b * 100).toFixed(2) + '%' : '0.00%'; }
 function pctNum(a, b) { return b ? parseFloat((a / b * 100).toFixed(2)) : 0; }
 
-function gradeStr(g)  { return `优秀 ${g[0]} / 良好 ${g[1]} / 合格 ${g[2]}`; }
-
-// ── Join helpers ──────────────────────────────────────
-function buildChannelLookup(userRows) {
-  const map = {};
-  userRows.forEach(u => {
-    const k = String(u[CERT_COL] || '').trim();
-    if (k) map[k] = u[GROUP_COL] || '非AIC++';
+function cleanData(rows) {
+  return rows.filter(r => {
+    const absentKey = Object.keys(r).find(k => k.includes('缺考'));
+    if (absentKey && String(r[absentKey]).trim() !== '正常') return false;
+    const name = String(r['考生姓名'] || '');
+    if (/测试|备用|test/i.test(name)) return false;
+    return true;
   });
-  return map;
+}
+
+function gradeStr(g) { return `优秀 ${g[0]} / 良好 ${g[1]} / 合格 ${g[2]}`; }
+
+// ── 双表分析（原逻辑保持不变）────────────────────────────────
+
+function parseScoreSheet(rows) {
+  if (!rows.length) return { rows, objCols: [], subCols: [] };
+  const headers = Object.keys(rows[0]);
+  const dataCols = headers.filter(h => !META_COLS.has(h) && h !== '');
+  let data = rows;
+  if (rows.length > 0 && dataCols.length > 0) {
+    const firstVal = String(rows[0][dataCols[0]] || '').trim();
+    if (/^\d+$/.test(firstVal)) data = rows.slice(1);
+  }
+  const objCols = headers.filter(h => h.includes('单项') || (h.includes('选择') && !h.includes('编程')));
+  const subCols = headers.filter(h => h.includes('编程') || h.includes('操作'));
+  data = data.map(r => {
+    const nr = {...r};
+    [...objCols, ...subCols].forEach(c => { nr[c] = parseFloat(nr[c]) || 0; });
+    return nr;
+  });
+  return { rows: data, objCols, subCols };
+}
+
+function matchSessions(userRows, scoreSheets) {
+  return Object.entries(scoreSheets).map(([k, rows]) => ({ name: k, userRows, scoreRows: rows }));
 }
 
 function joinScores(userRows, scoreRows, objCols, subCols) {
   if (!scoreRows) return [];
-  const lookup = buildChannelLookup(userRows);
+  const channelLookup = {};
+  userRows.forEach(u => {
+    const k = String(u[CERT_COL] || '').trim();
+    if (k) channelLookup[k] = u[GROUP_COL] || '非AIC++';
+  });
   return scoreRows.map(s => {
-    const m = { ...s };
-    m[GROUP_COL] = lookup[String(s[CERT_COL] || '').trim()] || '非AIC++';
-    objCols.forEach(c => { m[c] = parseFloat(s[c]) || 0; });
-    subCols.forEach(c => { m[c] = parseFloat(s[c]) || 0; });
-    if (objCols.length) m['客观题得分'] = objCols.reduce((a, c) => a + (m[c] || 0), 0);
-    if (subCols.length) m['主观题得分'] = subCols.reduce((a, c) => a + (m[c] || 0), 0);
+    const merged = {...s};
+    const key = String(s[CERT_COL] || '').trim();
+    merged[GROUP_COL] = channelLookup[key] || '非AIC++';
+    objCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+    subCols.forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+    if (objCols.length) merged['客观题得分'] = objCols.reduce((a, c) => a + (merged[c] || 0), 0);
+    if (subCols.length) merged['主观题得分'] = subCols.reduce((a, c) => a + (merged[c] || 0), 0);
     const all = [...objCols, ...subCols];
-    if (all.length) m['卷面成绩'] = all.reduce((a, c) => a + (m[c] || 0), 0);
-    if (m['卷面成绩'] != null) m['通过状态'] = scoreStatus(m['卷面成绩']);
-    return m;
+    if (all.length) merged['卷面成绩'] = all.reduce((a, c) => a + (merged[c] || 0), 0);
+    if (merged['卷面成绩'] != null) merged['通过状态'] = scoreStatus(merged['卷面成绩']);
+    return merged;
   });
-}
-
-function joinScoresAI(userRows, scoreRows, objCols, judgeCols, subCols) {
-  if (!scoreRows) return [];
-  const lookup = buildChannelLookup(userRows);
-  return scoreRows.map(s => {
-    const m = { ...s };
-    m[GROUP_COL] = lookup[String(s[CERT_COL] || '').trim()] || '非AIC++';
-    [...objCols, ...judgeCols, ...subCols].forEach(c => { m[c] = parseFloat(s[c]) || 0; });
-    if (objCols.length)   m['客观题得分'] = objCols.reduce((a, c)   => a + (m[c] || 0), 0);
-    if (judgeCols.length) m['判断题得分'] = judgeCols.reduce((a, c) => a + (m[c] || 0), 0);
-    if (subCols.length)   m['主观题得分'] = subCols.reduce((a, c)   => a + (m[c] || 0), 0);
-    const all = [...objCols, ...judgeCols, ...subCols];
-    if (all.length) m['卷面成绩'] = all.reduce((a, c) => a + (m[c] || 0), 0);
-    if (m['卷面成绩'] != null) m['通过状态'] = scoreStatus(m['卷面成绩']);
-    return m;
-  });
-}
-
-// ── Metrics ───────────────────────────────────────────
-function _baseMetrics(rows) {
-  const aic  = rows.filter(r => r[GROUP_COL] === 'AIC++');
-  const cpp  = rows.filter(r => r[GROUP_COL] !== 'AIC++');
-  const total = rows.length;
-  function passCount(sub) { return sub.filter(r => { const s = parseFloat(r['卷面成绩']); return !isNaN(s) && s >= SCORE_PASS; }).length; }
-  function gradeCounts(sub) {
-    let ex = 0, gd = 0, ok = 0;
-    sub.forEach(r => { const s = parseFloat(r['卷面成绩'])||0; if(s>=SCORE_EXCELLENT)ex++; else if(s>=SCORE_GOOD)gd++; else if(s>=SCORE_PASS)ok++; });
-    return [ex, gd, ok];
-  }
-  const allPass = passCount(rows), aicPass = passCount(aic), cppPass = passCount(cpp);
-  return { rows, aic, cpp, total, allPass, aicPass, cppPass, gradeCounts };
 }
 
 function computeMetrics(rows, objCols, subCols) {
   if (!rows.length) return null;
-  const { aic, cpp, total, allPass, aicPass, cppPass, gradeCounts } = _baseMetrics(rows);
-  const qStats = {};
-  objCols.forEach((c, i) => {
-    const r = sub => pctNum(sub.filter(r => (parseFloat(r[c])||0) > 0).length, sub.length);
-    qStats['选择题第'+(i+1)+'题'] = { type:'rate', val:r(rows), aicVal:r(aic), cppVal:r(cpp) };
-  });
-  subCols.forEach((c, j) => {
-    const a = sub => { const v=sub.map(r=>parseFloat(r[c])||0); return v.length?parseFloat((v.reduce((a,b)=>a+b,0)/v.length).toFixed(2)):0; };
-    qStats['操作题第'+(j+1)+'题'] = { type:'avg', val:a(rows), aicVal:a(aic), cppVal:a(cpp) };
-  });
-  return {
-    total, allPass, allPassRate: pctNum(allPass, total), gradeCounts: gradeCounts(rows),
-    allObjAvg: avg(rows,'客观题得分'), allSubAvg: avg(rows,'主观题得分'), allVolAvg: avg(rows,'卷面成绩'),
-    aicTotal: aic.length, aicPass, aicRatio: pctNum(aic.length,total), aicPassRate: pctNum(aicPass,aic.length),
-    aicGrades: gradeCounts(aic), aicObjAvg: avg(aic,'客观题得分'), aicSubAvg: avg(aic,'主观题得分'), aicVolAvg: avg(aic,'卷面成绩'),
-    cppTotal: cpp.length, cppPass, cppRatio: pctNum(cpp.length,total), cppPassRate: pctNum(cppPass,cpp.length),
-    cppGrades: gradeCounts(cpp), cppObjAvg: avg(cpp,'客观题得分'), cppSubAvg: avg(cpp,'主观题得分'), cppVolAvg: avg(cpp,'卷面成绩'),
-    qStats
-  };
-}
-
-function computeMetricsAI(rows, objCols, judgeCols, subCols) {
-  if (!rows.length) return null;
-  const { aic, cpp, total, allPass, aicPass, cppPass, gradeCounts } = _baseMetrics(rows);
-  const qStats = {};
-  objCols.forEach((c, i) => {
-    const r = sub => pctNum(sub.filter(r => (parseFloat(r[c])||0) > 0).length, sub.length);
-    qStats['选择题第'+(i+1)+'题'] = { type:'rate', val:r(rows), aicVal:r(aic), cppVal:r(cpp) };
-  });
-  judgeCols.forEach((c, k) => {
-    const r = sub => pctNum(sub.filter(r => (parseFloat(r[c])||0) > 0).length, sub.length);
-    qStats['判断题第'+(k+1)+'题'] = { type:'rate', val:r(rows), aicVal:r(aic), cppVal:r(cpp) };
-  });
-  subCols.forEach((c, j) => {
-    const a = sub => { const v=sub.map(r=>parseFloat(r[c])||0); return v.length?parseFloat((v.reduce((a,b)=>a+b,0)/v.length).toFixed(2)):0; };
-    qStats['操作题第'+(j+1)+'题'] = { type:'avg', val:a(rows), aicVal:a(aic), cppVal:a(cpp) };
-  });
-  return {
-    total, allPass, allPassRate: pctNum(allPass,total), gradeCounts: gradeCounts(rows),
-    allObjAvg: avg(rows,'客观题得分'), allJudgeAvg: avg(rows,'判断题得分'), allSubAvg: avg(rows,'主观题得分'), allVolAvg: avg(rows,'卷面成绩'),
-    aicTotal: aic.length, aicPass, aicRatio: pctNum(aic.length,total), aicPassRate: pctNum(aicPass,aic.length),
-    aicGrades: gradeCounts(aic), aicObjAvg: avg(aic,'客观题得分'), aicJudgeAvg: avg(aic,'判断题得分'), aicSubAvg: avg(aic,'主观题得分'), aicVolAvg: avg(aic,'卷面成绩'),
-    cppTotal: cpp.length, cppPass, cppRatio: pctNum(cpp.length,total), cppPassRate: pctNum(cppPass,cpp.length),
-    cppGrades: gradeCounts(cpp), cppObjAvg: avg(cpp,'客观题得分'), cppJudgeAvg: avg(cpp,'判断题得分'), cppSubAvg: avg(cpp,'主观题得分'), cppVolAvg: avg(cpp,'卷面成绩'),
-    qStats
-  };
-}
-
-function computeMetricsSingle(rows, objCols, subCols) {
-  if (!rows.length) return null;
+  const aic = rows.filter(r => r[GROUP_COL] === 'AIC++');
+  const cpp = rows.filter(r => r[GROUP_COL] !== 'AIC++');
   const total = rows.length;
-  function passCount(sub) { return sub.filter(r => { const s=parseFloat(r['卷面成绩']); return !isNaN(s)&&s>=SCORE_PASS; }).length; }
-  function gradeCounts(sub) {
-    let ex=0,gd=0,ok=0; sub.forEach(r=>{const s=parseFloat(r['卷面成绩'])||0;if(s>=SCORE_EXCELLENT)ex++;else if(s>=SCORE_GOOD)gd++;else if(s>=SCORE_PASS)ok++;});
-    return [ex,gd,ok];
+
+  function passCount(sub) {
+    return sub.filter(r => { const s = parseFloat(r['卷面成绩']); return !isNaN(s) && s >= SCORE_PASS; }).length;
   }
+  function gradeCounts(sub) {
+    let ex = 0, gd = 0, ok = 0;
+    sub.forEach(r => { const s = parseFloat(r['卷面成绩']) || 0; if (s >= SCORE_EXCELLENT) ex++; else if (s >= SCORE_GOOD) gd++; else if (s >= SCORE_PASS) ok++; });
+    return [ex, gd, ok];
+  }
+
+  const allPass = passCount(rows), aicPass = passCount(aic), cppPass = passCount(cpp);
   const qStats = {};
-  objCols.forEach((c,i)=>{const v=rows.map(r=>parseFloat(r[c])||0);qStats['选择题第'+(i+1)+'题']={type:'rate',val:pctNum(v.filter(x=>x>0).length,total)};});
-  subCols.forEach((c,j)=>{const v=rows.map(r=>parseFloat(r[c])||0);qStats['操作题第'+(j+1)+'题']={type:'avg',val:parseFloat((v.reduce((a,b)=>a+b,0)/v.length).toFixed(2))};});
-  const allPass = passCount(rows);
-  return { total, allPass, allPassRate:pctNum(allPass,total), gradeCounts:gradeCounts(rows), objAvg:avg(rows,'客观题得分'), subAvg:avg(rows,'主观题得分'), volAvg:avg(rows,'卷面成绩'), qStats };
-}
-
-// ── Render helpers ────────────────────────────────────
-function summaryCards(m, labels) {
-  // labels: [label, valueKey, subTemplate][]
-  return `<div class="summary-grid">${labels.map(([label,val,sub])=>`<div class="stat-card"><div class="label">${label}</div><div class="value">${val}</div><div class="sub">${sub}</div></div>`).join('')}</div>`;
-}
-
-function qTableHtml(qStats, cols) {
-  if (!Object.keys(qStats).length) return '';
-  const colHdr = cols.map(c=>`<th>${c}</th>`).join('');
-  let rows = '';
-  Object.entries(qStats).forEach(([qname,q]) => {
-    const unit = q.type==='rate'?'正确率':'均分';
-    const fmt  = v => q.type==='rate' ? v+'%' : v;
-    const cells = cols.length === 4
-      ? `<td>${fmt(q.val)}</td><td>${fmt(q.aicVal)}</td><td>${fmt(q.cppVal)}</td>`
-      : `<td>${fmt(q.val)}</td>`;
-    rows += `<tr><td>${qname} <span style="font-size:11px;color:#a0aec0">${unit}</span></td>${cells}</tr>`;
+  objCols.forEach((c, i) => {
+    const r2 = sub => pctNum(sub.filter(r => parseFloat(r[c]) > 0).length, sub.length);
+    qStats['选择题第' + (i+1) + '题'] = { type: 'rate', val: r2(rows), aicVal: r2(aic), cppVal: r2(cpp) };
   });
-  return `<div style="margin-top:16px"><div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div><table class="metrics-table"><tr>${colHdr}</tr>${rows}</table></div>`;
+  subCols.forEach((c, j) => {
+    const a2 = sub => { const v = sub.map(r => parseFloat(r[c]) || 0); return v.length ? parseFloat((v.reduce((a,b)=>a+b,0)/v.length).toFixed(2)) : 0; };
+    qStats['操作题第' + (j+1) + '题'] = { type: 'avg', val: a2(rows), aicVal: a2(aic), cppVal: a2(cpp) };
+  });
+
+  return {
+    total, allPass, allPassRate: pctNum(allPass, total),
+    gradeCounts: gradeCounts(rows),
+    allObjAvg: avg(rows, '客观题得分'), allSubAvg: avg(rows, '主观题得分'), allVolAvg: avg(rows, '卷面成绩'),
+    aicTotal: aic.length, aicPass, aicRatio: pctNum(aic.length, total), aicPassRate: pctNum(aicPass, aic.length),
+    aicGrades: gradeCounts(aic), aicObjAvg: avg(aic, '客观题得分'), aicSubAvg: avg(aic, '主观题得分'), aicVolAvg: avg(aic, '卷面成绩'),
+    cppTotal: cpp.length, cppPass, cppRatio: pctNum(cpp.length, total), cppPassRate: pctNum(cppPass, cpp.length),
+    cppGrades: gradeCounts(cpp), cppObjAvg: avg(cpp, '客观题得分'), cppSubAvg: avg(cpp, '主观题得分'), cppVolAvg: avg(cpp, '卷面成绩'),
+    qStats
+  };
 }
 
-// 双表 session card
-function renderSessionCard(name, m, removed, isTotal=false) {
-  const note = removed>0?`<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>`:'';
+function renderResults(sessionMetrics, mTotal, objCols, subCols) {
+  const container = document.getElementById('resultContent');
+  let html = '';
+  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
+  if (sum) {
+    html += `<div class="summary-grid">
+      <div class="stat-card"><div class="label">实际参考人数</div><div class="value">${sum.total}</div><div class="sub">人</div></div>
+      <div class="stat-card"><div class="label">全卷通过率</div><div class="value">${sum.allPassRate}%</div><div class="sub">${sum.allPass}/${sum.total} 人通过</div></div>
+      <div class="stat-card"><div class="label">AIC++ 通过率</div><div class="value">${sum.aicPassRate}%</div><div class="sub">${sum.aicPass}/${sum.aicTotal} 人</div></div>
+      <div class="stat-card"><div class="label">C++小班通过率</div><div class="value">${sum.cppPassRate}%</div><div class="sub">${sum.cppPass}/${sum.cppTotal} 人</div></div>
+    </div>`;
+  }
+  sessionMetrics.forEach(({ name, m, removed }) => { html += renderSessionCard(name, m, removed, objCols, subCols); });
+  if (mTotal && sessionMetrics.length > 1) html += renderSessionCard('汇总（所有场次）', mTotal, 0, objCols, subCols, true);
+  container.innerHTML = html;
+}
+
+function renderSessionCard(name, m, removed, objCols, subCols, isTotal = false) {
+  const removeNote = removed > 0 ? `<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>` : '';
+  let qHtml = '';
+  if (Object.keys(m.qStats).length) {
+    qHtml = `<div style="margin-top:16px">
+      <div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div>
+      <table class="metrics-table">
+        <tr><th>题目</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>`;
+    Object.entries(m.qStats).forEach(([qname, {type, val, aicVal, cppVal}]) => {
+      const fmt = v => type === 'rate' ? v + '%' : v;
+      const unit = type === 'rate' ? '正确率' : '均分';
+      qHtml += `<tr><td>${qname} <span style="font-size:11px;color:#a0aec0">${unit}</span></td><td>${fmt(val)}</td><td>${fmt(aicVal)}</td><td>${fmt(cppVal)}</td></tr>`;
+    });
+    qHtml += '</table></div>';
+  }
   return `<div class="session-card">
-    <div class="session-title">${isTotal?'📊 ':'📋 '}${name} ${note}</div>
+    <div class="session-title">${isTotal ? '📊 ' : '📋 '}${name} ${removeNote}</div>
     <table class="metrics-table">
       <tr><th>指标</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>
       <tr class="section-row"><td colspan="4">── 基础指标 ──</td></tr>
@@ -488,116 +408,10 @@ function renderSessionCard(name, m, removed, isTotal=false) {
       <tr><td>主观题均分</td><td>${m.allSubAvg}</td><td>${m.aicSubAvg}</td><td>${m.cppSubAvg}</td></tr>
       <tr><td>卷面均分</td><td>${m.allVolAvg}</td><td>${m.aicVolAvg}</td><td>${m.cppVolAvg}</td></tr>
     </table>
-    ${qTableHtml(m.qStats,['题目','全体','AIC++','C++小班'])}
+    ${qHtml}
   </div>`;
 }
 
-// AI session card（多判断题均分行）
-function renderSessionCardAI(name, m, removed, isTotal=false) {
-  const note = removed>0?`<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>`:'';
-  return `<div class="session-card">
-    <div class="session-title">${isTotal?'📊 ':'📋 '}${name} ${note}</div>
-    <table class="metrics-table">
-      <tr><th>指标</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>
-      <tr class="section-row"><td colspan="4">── 基础指标 ──</td></tr>
-      <tr><td>参考人数</td><td>${m.total} 人</td><td>${m.aicTotal} 人（${m.aicRatio}%）</td><td>${m.cppTotal} 人（${m.cppRatio}%）</td></tr>
-      <tr><td>全卷通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%（${m.allPass}人）</span></td><td><span class="badge ${m.aicPassRate>=60?'badge-pass':'badge-fail'}">${m.aicPassRate}%（${m.aicPass}人）</span></td><td><span class="badge ${m.cppPassRate>=60?'badge-pass':'badge-fail'}">${m.cppPassRate}%（${m.cppPass}人）</span></td></tr>
-      <tr><td>优/良/合格人数</td><td>${gradeStr(m.gradeCounts)}</td><td>${gradeStr(m.aicGrades)}</td><td>${gradeStr(m.cppGrades)}</td></tr>
-      <tr class="section-row"><td colspan="4">── 均分 ──</td></tr>
-      <tr><td>客观题均分</td><td>${m.allObjAvg}</td><td>${m.aicObjAvg}</td><td>${m.cppObjAvg}</td></tr>
-      <tr><td>判断题均分</td><td>${m.allJudgeAvg}</td><td>${m.aicJudgeAvg}</td><td>${m.cppJudgeAvg}</td></tr>
-      <tr><td>主观题均分</td><td>${m.allSubAvg}</td><td>${m.aicSubAvg}</td><td>${m.cppSubAvg}</td></tr>
-      <tr><td>卷面均分</td><td>${m.allVolAvg}</td><td>${m.aicVolAvg}</td><td>${m.cppVolAvg}</td></tr>
-    </table>
-    ${qTableHtml(m.qStats,['题目','全体','AIC++','C++小班'])}
-  </div>`;
-}
-
-// 单表 session card
-function renderSingleCard(name, m, removed, isTotal=false) {
-  const note = removed>0?`<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>`:'';
-  const gc = m.gradeCounts;
-  return `<div class="session-card">
-    <div class="session-title">${isTotal?'📊 ':'📋 '}${name} ${note}</div>
-    <table class="metrics-table">
-      <tr><th>指标</th><th>数值</th></tr>
-      <tr class="section-row"><td colspan="2">── 基础指标 ──</td></tr>
-      <tr><td>实际参考人数</td><td>${m.total} 人</td></tr>
-      <tr><td>全卷通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%（${m.allPass} 人）</span></td></tr>
-      <tr><td>不合格（＜60）</td><td>${m.total-m.allPass} 人</td></tr>
-      <tr><td>合格 60-74</td><td>${gc[2]} 人</td></tr>
-      <tr><td>良好 75-89</td><td>${gc[1]} 人</td></tr>
-      <tr><td>优秀 ≥90</td><td>${gc[0]} 人</td></tr>
-      <tr class="section-row"><td colspan="2">── 均分 ──</td></tr>
-      <tr><td>客观题均分</td><td>${m.objAvg}</td></tr>
-      <tr><td>操作题均分</td><td>${m.subAvg}</td></tr>
-      <tr><td>卷面均分</td><td>${m.volAvg}</td></tr>
-    </table>
-    ${qTableHtml(m.qStats,['题目','全体'])}
-  </div>`;
-}
-
-// ── Render results ────────────────────────────────────
-function renderResults(sessionMetrics, mTotal) {
-  const container = document.getElementById('resultContent');
-  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
-  let html = sum ? summaryCards(sum,[
-    ['实际参考人数', sum.total, '人'],
-    ['全卷通过率', sum.allPassRate+'%', `${sum.allPass}/${sum.total} 人通过`],
-    ['AIC++ 通过率', sum.aicPassRate+'%', `${sum.aicPass}/${sum.aicTotal} 人`],
-    ['C++小班通过率', sum.cppPassRate+'%', `${sum.cppPass}/${sum.cppTotal} 人`]
-  ]) : '';
-  sessionMetrics.forEach(({name,m,removed}) => { html += renderSessionCard(name,m,removed); });
-  if (mTotal && sessionMetrics.length>1) html += renderSessionCard('汇总（所有场次）',mTotal,0,true);
-  container.innerHTML = html;
-}
-
-function renderResultsAI(sessionMetrics, mTotal) {
-  const container = document.getElementById('resultContent');
-  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
-  let html = sum ? summaryCards(sum,[
-    ['实际参考人数', sum.total, '人'],
-    ['全卷通过率', sum.allPassRate+'%', `${sum.allPass}/${sum.total} 人通过`],
-    ['AIC++ 通过率', sum.aicPassRate+'%', `${sum.aicPass}/${sum.aicTotal} 人`],
-    ['C++小班通过率', sum.cppPassRate+'%', `${sum.cppPass}/${sum.cppTotal} 人`]
-  ]) : '';
-  sessionMetrics.forEach(({name,m,removed}) => { html += renderSessionCardAI(name,m,removed); });
-  if (mTotal && sessionMetrics.length>1) html += renderSessionCardAI('汇总（所有场次）',mTotal,0,true);
-  container.innerHTML = html;
-}
-
-function renderSingleResults(sessionMetrics, mTotal) {
-  const container = document.getElementById('resultContent');
-  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
-  let html = sum ? summaryCards(sum,[
-    ['实际参考人数', sum.total, '人'],
-    ['全卷通过率', sum.allPassRate+'%', `${sum.allPass}/${sum.total} 人通过`],
-    ['卷面均分', sum.volAvg, '分'],
-    ['优秀人数', sum.gradeCounts[0], '≥90分']
-  ]) : '';
-  sessionMetrics.forEach(({name,m,removed}) => { html += renderSingleCard(name,m,removed); });
-  if (mTotal && sessionMetrics.length>1) html += renderSingleCard('汇总（所有场次）',mTotal,0,true);
-  container.innerHTML = html;
-  document.getElementById('results').style.display = 'block';
-}
-
-// ── Reset ─────────────────────────────────────────────
-function resetAll() {
-  file1Data=null; file2Data=null; file3Data=null; file4Data=null; file5Data=null;
-  lastSessionMetrics=[]; lastObjCols=[]; lastSubCols=[]; lastMTotal=null;
-  lastAISessionMetrics=[]; lastAIObjCols=[]; lastAIJudgeCols=[]; lastAISubCols=[]; lastAIMTotal=null;
-  [1,2,3,4,5].forEach(n => {
-    document.getElementById('drop'+n).classList.remove('has-file','drag-over');
-    document.getElementById('name'+n).textContent='';
-    document.getElementById('file'+n).value='';
-  });
-  document.getElementById('results').style.display='none';
-  document.getElementById('loading').style.display='none';
-  ['btnAnalyze','btnAnalyzeSingle','btnAnalyzeAI'].forEach(id => { document.getElementById(id).disabled=false; });
-  hideError();
-}
-
-// ── Analyze: dual ─────────────────────────────────────
 async function analyze() {
   hideError();
   if (!file1Data || !file2Data) { showError('请先上传两个文件'); return; }
@@ -612,43 +426,204 @@ async function analyze() {
       const rows = sheetToRows(wb1.Sheets[sn]);
       if (rows.length && GROUP_COL in rows[0]) { userRows = rows; break; }
     }
-    if (!userRows) throw new Error(`用户总表中未找到「${GROUP_COL}」字段`);
+    if (!userRows) throw new Error(`用户总表中未找到「${GROUP_COL}」字段，请确认文件正确`);
     const seen = new Set();
-    userRows = userRows.filter(r => { const k=String(r[CERT_COL]||''); if(seen.has(k))return false; seen.add(k); return true; });
+    userRows = userRows.filter(r => { const k = String(r[CERT_COL] || ''); if (seen.has(k)) return false; seen.add(k); return true; });
 
     const wb2 = readWorkbook(file2Data.buf);
+    const scoreSheets = {};
+    wb2.SheetNames.forEach(sn => { scoreSheets[sn] = sheetToRows(wb2.Sheets[sn]); });
+
     const parsedSheets = {};
-    let globalObjCols=[], globalSubCols=[];
-    wb2.SheetNames.forEach(sn => {
-      const { rows, objCols, subCols } = parseScoreSheet(sheetToRows(wb2.Sheets[sn]));
-      parsedSheets[sn] = { rows, objCols, subCols };
-      if (objCols.length > globalObjCols.length) { globalObjCols=objCols; globalSubCols=subCols; }
+    let globalObjCols = [], globalSubCols = [];
+    Object.entries(scoreSheets).forEach(([k, rows]) => {
+      const { rows: parsed, objCols, subCols } = parseScoreSheet(rows);
+      parsedSheets[k] = { rows: parsed, objCols, subCols };
+      if (objCols.length > globalObjCols.length) { globalObjCols = objCols; globalSubCols = subCols; }
     });
 
-    const sessionMetrics=[], allCleanedRows=[];
-    for (const sn of wb2.SheetNames) {
-      const { rows:scoreRows, objCols, subCols } = parsedSheets[sn];
-      const oc = objCols.length ? objCols : globalObjCols;
-      const sc = subCols.length ? subCols : globalSubCols;
-      const joined = joinScores(userRows, scoreRows, oc, sc);
-      const before = joined.length;
+    const pairs = matchSessions(userRows, Object.fromEntries(Object.entries(parsedSheets).map(([k,v]) => [k, v.rows])));
+    const sessionMetrics = [];
+    const allCleanedRows = [];
+    for (const pair of pairs) {
+      const sheetInfo = parsedSheets[pair.name] || { rows: [], objCols: globalObjCols, subCols: globalSubCols };
+      const objCols = sheetInfo.objCols.length ? sheetInfo.objCols : globalObjCols;
+      const subCols = sheetInfo.subCols.length ? sheetInfo.subCols : globalSubCols;
+      const joined = joinScores(pair.userRows, pair.scoreRows, objCols, subCols);
+      const beforeClean = joined.length;
       const cleaned = cleanData(joined);
-      const m = computeMetrics(cleaned, oc, sc);
+      const m = computeMetrics(cleaned, objCols, subCols);
       if (!m) continue;
-      sessionMetrics.push({ name:sn, m, removed:before-cleaned.length });
+      sessionMetrics.push({ name: pair.name, m, removed: beforeClean - cleaned.length, objCols, subCols });
       allCleanedRows.push(...cleaned);
     }
-    if (!sessionMetrics.length) throw new Error('未找到有效场次数据');
-    const mTotal = sessionMetrics.length>1 ? computeMetrics(allCleanedRows,globalObjCols,globalSubCols) : null;
-    lastSessionMetrics=sessionMetrics; lastObjCols=globalObjCols; lastSubCols=globalSubCols; lastMTotal=mTotal;
+    if (!sessionMetrics.length) throw new Error('未找到有效场次数据，请检查文件格式');
+
+    let mTotal = null;
+    if (sessionMetrics.length > 1) mTotal = computeMetrics(allCleanedRows, globalObjCols, globalSubCols);
+
+    lastSessionMetrics = sessionMetrics;
+    lastObjCols = globalObjCols;
+    lastSubCols = globalSubCols;
+    lastMTotal = mTotal;
+
     document.getElementById('dlBtn').onclick = downloadExcel;
-    renderResults(sessionMetrics, mTotal);
+    renderResults(sessionMetrics, mTotal, globalObjCols, globalSubCols);
     document.getElementById('results').style.display = 'block';
-  } catch(e) { showError(e.message||'分析失败，请检查文件格式'); }
-  finally { document.getElementById('loading').style.display='none'; document.getElementById('btnAnalyze').disabled=false; }
+  } catch(e) {
+    showError(e.message || '分析失败，请检查文件格式');
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('btnAnalyze').disabled = false;
+  }
 }
 
-// ── Analyze: single ───────────────────────────────────
+function downloadExcel() {
+  const wb = XLSX.utils.book_new();
+  const datasets = [];
+  lastSessionMetrics.forEach(({name, m}) => datasets.push([name, m]));
+  if (lastMTotal && lastSessionMetrics.length > 1) datasets.push(['汇总（所有场次）', lastMTotal]);
+  if (!datasets.length) return;
+
+  const qs = datasets[0][1].qStats;
+  const qNames = Object.keys(qs);
+  const aoa1 = [];
+  const sec  = label => aoa1.push(['── ' + label + ' ──', '', '', '']);
+  const row4 = (label, a, b, c) => aoa1.push([label, a, b, c]);
+
+  datasets.forEach(([label, m]) => {
+    aoa1.push([label, '全体', 'AIC++', 'C++小班']);
+    sec('基础指标');
+    row4('实际参考人数（人）',   m.total,             m.aicTotal,          m.cppTotal);
+    row4('考生占比',             '100%',              m.aicRatio + '%',    m.cppRatio + '%');
+    row4('全卷通过率',           m.allPassRate + '%', m.aicPassRate + '%', m.cppPassRate + '%');
+    row4('通过人数（人）',       m.allPass,           m.aicPass,           m.cppPass);
+    row4('不合格人数（人）',     m.total - m.allPass, m.aicTotal - m.aicPass, m.cppTotal - m.cppPass);
+    row4('合格人数 60-74（人）', m.gradeCounts[2],    m.aicGrades[2],      m.cppGrades[2]);
+    row4('良好人数 75-89（人）', m.gradeCounts[1],    m.aicGrades[1],      m.cppGrades[1]);
+    row4('优秀人数 ≥90（人）',   m.gradeCounts[0],    m.aicGrades[0],      m.cppGrades[0]);
+    sec('均分');
+    row4('客观题均分', m.allObjAvg, m.aicObjAvg, m.cppObjAvg);
+    row4('操作题均分', m.allSubAvg, m.aicSubAvg, m.cppSubAvg);
+    row4('卷面均分',   m.allVolAvg, m.aicVolAvg, m.cppVolAvg);
+    sec('每道题统计');
+    aoa1.push(['题目', '全体', 'AIC++', 'C++小班']);
+    qNames.forEach(qname => {
+      const {type} = qs[qname];
+      const unit = type === 'rate' ? '正确率' : '均分';
+      const fmt = (m, key) => { const q = m.qStats[qname]; return q ? (type === 'rate' ? q[key] + '%' : q[key]) : ''; };
+      row4(qname + '（' + unit + '）', fmt(m,'val'), fmt(m,'aicVal'), fmt(m,'cppVal'));
+    });
+    aoa1.push(['', '', '', '']);
+  });
+
+  const ws1 = XLSX.utils.aoa_to_sheet(aoa1);
+  ws1['!cols'] = [{ wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, ws1, '分析结果');
+
+  const aoa2 = [];
+  datasets.forEach(([label, m]) => {
+    aoa2.push([label, '全体', 'AIC++', 'C++小班']);
+    qNames.forEach(qname => {
+      const {type} = qs[qname];
+      const raw = (m, key) => { const q = m.qStats[qname]; return q ? q[key] : ''; };
+      aoa2.push([qname + '（' + (type==='rate'?'正确率%':'均分') + '）', raw(m,'val'), raw(m,'aicVal'), raw(m,'cppVal')]);
+    });
+    aoa2.push(['全卷通过率%',  m.allPassRate,  m.aicPassRate,  m.cppPassRate]);
+    aoa2.push(['通过人数',     m.allPass,      m.aicPass,      m.cppPass]);
+    aoa2.push(['实际参考人数', m.total,        m.aicTotal,     m.cppTotal]);
+    aoa2.push(['考生占比%',    100,            m.aicRatio,     m.cppRatio]);
+    aoa2.push(['', '', '', '']);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(aoa2);
+  ws2['!cols'] = [{ wch: 26 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws2, '复制粘贴');
+  XLSX.writeFile(wb, 'result.xlsx');
+}
+
+// ── 单表统计 ─────────────────────────────────────────────────
+
+function computeMetricsSingle(rows, objCols, subCols) {
+  if (!rows.length) return null;
+  const total = rows.length;
+  function passCount(sub) { return sub.filter(r => { const s = parseFloat(r['卷面成绩']); return !isNaN(s) && s >= SCORE_PASS; }).length; }
+  function gradeCounts(sub) {
+    let ex = 0, gd = 0, ok = 0;
+    sub.forEach(r => { const s = parseFloat(r['卷面成绩']) || 0; if (s >= SCORE_EXCELLENT) ex++; else if (s >= SCORE_GOOD) gd++; else if (s >= SCORE_PASS) ok++; });
+    return [ex, gd, ok];
+  }
+  const allPass = passCount(rows);
+  const gc = gradeCounts(rows);
+  const qStats = {};
+  objCols.forEach((c, i) => {
+    const vals = rows.map(r => parseFloat(r[c]) || 0);
+    qStats['选择题第' + (i+1) + '题'] = { type: 'rate', val: pctNum(vals.filter(v => v > 0).length, total) };
+  });
+  subCols.forEach((c, j) => {
+    const vals = rows.map(r => parseFloat(r[c]) || 0);
+    qStats['操作题第' + (j+1) + '题'] = { type: 'avg', val: parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)) };
+  });
+  return {
+    total, allPass, allPassRate: pctNum(allPass, total),
+    gradeCounts: gc,
+    objAvg: avg(rows, '客观题得分'), subAvg: avg(rows, '主观题得分'), volAvg: avg(rows, '卷面成绩'),
+    qStats
+  };
+}
+
+function renderSingleResults(sessionMetrics, mTotal) {
+  const container = document.getElementById('resultContent');
+  let html = '';
+  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
+  if (sum) {
+    html += `<div class="summary-grid">
+      <div class="stat-card"><div class="label">实际参考人数</div><div class="value">${sum.total}</div><div class="sub">人</div></div>
+      <div class="stat-card"><div class="label">全卷通过率</div><div class="value">${sum.allPassRate}%</div><div class="sub">${sum.allPass}/${sum.total} 人通过</div></div>
+      <div class="stat-card"><div class="label">卷面均分</div><div class="value">${sum.volAvg}</div><div class="sub">分</div></div>
+      <div class="stat-card"><div class="label">优秀人数</div><div class="value">${sum.gradeCounts[0]}</div><div class="sub">≥90分</div></div>
+    </div>`;
+  }
+  sessionMetrics.forEach(({name, m, removed}) => { html += renderSingleCard(name, m, removed); });
+  if (mTotal && sessionMetrics.length > 1) html += renderSingleCard('汇总（所有场次）', mTotal, 0, true);
+  container.innerHTML = html;
+  document.getElementById('results').style.display = 'block';
+}
+
+function renderSingleCard(name, m, removed, isTotal = false) {
+  const removeNote = removed > 0 ? `<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>` : '';
+  const gc = m.gradeCounts;
+  const noPass = m.total - m.allPass;
+  let qHtml = '';
+  if (Object.keys(m.qStats).length) {
+    qHtml = `<div style="margin-top:16px">
+      <div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div>
+      <table class="metrics-table"><tr><th>题目</th><th>全体</th></tr>`;
+    Object.entries(m.qStats).forEach(([qname, {type, val}]) => {
+      const unit = type === 'rate' ? '正确率' : '均分';
+      qHtml += `<tr><td>${qname} <span style="font-size:11px;color:#a0aec0">${unit}</span></td><td>${type==='rate' ? val+'%' : val}</td></tr>`;
+    });
+    qHtml += '</table></div>';
+  }
+  return `<div class="session-card">
+    <div class="session-title">${isTotal ? '📊 ' : '📋 '}${name} ${removeNote}</div>
+    <table class="metrics-table">
+      <tr><th>指标</th><th>数值</th></tr>
+      <tr class="section-row"><td colspan="2">── 基础指标 ──</td></tr>
+      <tr><td>实际参考人数</td><td>${m.total} 人</td></tr>
+      <tr><td>全卷通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%（${m.allPass} 人）</span></td></tr>
+      <tr><td>不合格（＜60）</td><td>${noPass} 人</td></tr>
+      <tr><td>合格 60-74</td><td>${gc[2]} 人</td></tr>
+      <tr><td>良好 75-89</td><td>${gc[1]} 人</td></tr>
+      <tr><td>优秀 ≥90</td><td>${gc[0]} 人</td></tr>
+      <tr class="section-row"><td colspan="2">── 均分 ──</td></tr>
+      <tr><td>客观题均分</td><td>${m.objAvg}</td></tr>
+      <tr><td>操作题均分</td><td>${m.subAvg}</td></tr>
+      <tr><td>卷面均分</td><td>${m.volAvg}</td></tr>
+    </table>
+    ${qHtml}
+  </div>`;
+}
+
 async function analyzeSingle() {
   hideError();
   if (!file3Data) { showError('请先上传成绩明细文件'); return; }
@@ -658,39 +633,221 @@ async function analyzeSingle() {
   await new Promise(r => setTimeout(r, 50));
   try {
     const wb = readWorkbook(file3Data.buf);
-    const sessionMetrics=[], allCleanedRows=[];
-    let globalObjCols=[], globalSubCols=[];
+    const sessionMetrics = [];
+    const allCleanedRows = [];
+    let globalObjCols = [], globalSubCols = [];
     for (const sn of wb.SheetNames) {
-      const { rows:parsed, objCols, subCols } = parseScoreSheet(sheetToRows(wb.Sheets[sn]));
+      let rows = sheetToRows(wb.Sheets[sn]);
+      const { rows: parsed, objCols, subCols } = parseScoreSheet(rows);
       if (!parsed.length) continue;
-      if (objCols.length > globalObjCols.length) { globalObjCols=objCols; globalSubCols=subCols; }
+      if (objCols.length > globalObjCols.length) { globalObjCols = objCols; globalSubCols = subCols; }
       const withScore = parsed.map(r => {
-        const nr={...r};
-        if(objCols.length) nr['客观题得分']=objCols.reduce((a,c)=>a+(parseFloat(r[c])||0),0);
-        if(subCols.length) nr['主观题得分']=subCols.reduce((a,c)=>a+(parseFloat(r[c])||0),0);
-        nr['卷面成绩']=[...objCols,...subCols].reduce((a,c)=>a+(parseFloat(r[c])||0),0);
+        const nr = {...r};
+        if (objCols.length) nr['客观题得分'] = objCols.reduce((a,c) => a + (parseFloat(r[c])||0), 0);
+        if (subCols.length) nr['主观题得分'] = subCols.reduce((a,c) => a + (parseFloat(r[c])||0), 0);
+        nr['卷面成绩'] = [...objCols, ...subCols].reduce((a,c) => a + (parseFloat(r[c])||0), 0);
         return nr;
       });
-      const before=withScore.length, cleaned=cleanData(withScore);
-      const m=computeMetricsSingle(cleaned,objCols,subCols);
-      if(!m) continue;
-      sessionMetrics.push({name:sn,m,removed:before-cleaned.length});
+      const beforeClean = withScore.length;
+      const cleaned = cleanData(withScore);
+      const m = computeMetricsSingle(cleaned, objCols, subCols);
+      if (!m) continue;
+      sessionMetrics.push({ name: sn, m, removed: beforeClean - cleaned.length });
       allCleanedRows.push(...cleaned);
     }
-    if(!sessionMetrics.length) throw new Error('未找到有效数据');
-    const mTotal=sessionMetrics.length>1?computeMetricsSingle(allCleanedRows,globalObjCols,globalSubCols):null;
-    lastSessionMetrics=sessionMetrics; lastObjCols=globalObjCols; lastSubCols=globalSubCols; lastMTotal=mTotal;
+    if (!sessionMetrics.length) throw new Error('未找到有效数据，请检查文件格式');
+    let mTotal = null;
+    if (sessionMetrics.length > 1) mTotal = computeMetricsSingle(allCleanedRows, globalObjCols, globalSubCols);
+    lastSessionMetrics = sessionMetrics;
+    lastObjCols = globalObjCols; lastSubCols = globalSubCols; lastMTotal = mTotal;
     document.getElementById('dlBtn').onclick = downloadExcelSingle;
     renderSingleResults(sessionMetrics, mTotal);
-  } catch(e) { showError(e.message||'分析失败'); }
-  finally { document.getElementById('loading').style.display='none'; document.getElementById('btnAnalyzeSingle').disabled=false; }
+  } catch(e) {
+    showError(e.message || '分析失败，请检查文件格式');
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('btnAnalyzeSingle').disabled = false;
+  }
 }
 
-// ── Analyze: AI ───────────────────────────────────────
-async function analyzeAI() {
+function downloadExcelSingle() {
+  const wb = XLSX.utils.book_new();
+  const datasets = [];
+  lastSessionMetrics.forEach(({name, m}) => datasets.push([name, m]));
+  if (lastMTotal && lastSessionMetrics.length > 1) datasets.push(['汇总（所有场次）', lastMTotal]);
+  if (!datasets.length) return;
+  const qs = datasets[0][1].qStats;
+  const qNames = Object.keys(qs);
+  const aoa = [];
+  datasets.forEach(([label, m]) => {
+    aoa.push([label, '数值']);
+    aoa.push(['── 基础指标 ──', '']);
+    aoa.push(['实际参考人数（人）', m.total]);
+    aoa.push(['全卷通过率（%）', m.allPassRate]);
+    aoa.push(['通过人数（人）', m.allPass]);
+    aoa.push(['不合格（人）', m.total - m.allPass]);
+    aoa.push(['合格 60-74（人）', m.gradeCounts[2]]);
+    aoa.push(['良好 75-89（人）', m.gradeCounts[1]]);
+    aoa.push(['优秀 ≥90（人）', m.gradeCounts[0]]);
+    aoa.push(['── 均分 ──', '']);
+    aoa.push(['客观题均分', m.objAvg]);
+    aoa.push(['操作题均分', m.subAvg]);
+    aoa.push(['卷面均分', m.volAvg]);
+    aoa.push(['── 每道题统计 ──', '']);
+    qNames.forEach(qname => {
+      const {type, val} = m.qStats[qname];
+      aoa.push([qname + '（' + (type==='rate'?'正确率':'均分') + '）', type==='rate' ? val+'%' : val]);
+    });
+    aoa.push(['', '']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{ wch: 26 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, ws, '统计结果');
+  XLSX.writeFile(wb, 'result_single.xlsx');
+}
+
+// ── Python AI（含判断题）────────────────────────────────────
+
+function parseScoreSheetPython(rows) {
+  if (!rows.length) return { rows, objCols: [], judgeCols: [], subCols: [] };
+  const headers = Object.keys(rows[0]);
+  const dataCols = headers.filter(h => !META_COLS.has(h) && h !== '');
+  let data = rows;
+  if (rows.length > 0 && dataCols.length > 0) {
+    const firstVal = String(rows[0][dataCols[0]] || '').trim();
+    if (/^\d+$/.test(firstVal)) data = rows.slice(1);
+  }
+  const objCols   = headers.filter(h => h.includes('单项') || (h.includes('选择') && !h.includes('编程')));
+  const judgeCols = headers.filter(h => h.includes('判断'));
+  const subCols   = headers.filter(h => h.includes('编程') || h.includes('操作'));
+  data = data.map(r => {
+    const nr = {...r};
+    [...objCols, ...judgeCols, ...subCols].forEach(c => { nr[c] = parseFloat(nr[c]) || 0; });
+    return nr;
+  });
+  return { rows: data, objCols, judgeCols, subCols };
+}
+
+function joinScoresPython(userRows, scoreRows, objCols, judgeCols, subCols) {
+  if (!scoreRows) return [];
+  const channelLookup = {};
+  userRows.forEach(u => {
+    const k = String(u[CERT_COL] || '').trim();
+    if (k) channelLookup[k] = u[GROUP_COL] || '非AIC++';
+  });
+  return scoreRows.map(s => {
+    const merged = {...s};
+    const key = String(s[CERT_COL] || '').trim();
+    merged[GROUP_COL] = channelLookup[key] || '非AIC++';
+    [...objCols, ...judgeCols, ...subCols].forEach(c => { merged[c] = parseFloat(s[c]) || 0; });
+    if (objCols.length)   merged['客观题得分'] = objCols.reduce((a,c)   => a + (merged[c]||0), 0);
+    if (judgeCols.length) merged['判断题得分'] = judgeCols.reduce((a,c) => a + (merged[c]||0), 0);
+    if (subCols.length)   merged['主观题得分'] = subCols.reduce((a,c)   => a + (merged[c]||0), 0);
+    const all = [...objCols, ...judgeCols, ...subCols];
+    if (all.length) merged['卷面成绩'] = all.reduce((a,c) => a + (merged[c]||0), 0);
+    if (merged['卷面成绩'] != null) merged['通过状态'] = scoreStatus(merged['卷面成绩']);
+    return merged;
+  });
+}
+
+function computeMetricsPython(rows, objCols, judgeCols, subCols) {
+  if (!rows.length) return null;
+  const aic = rows.filter(r => r[GROUP_COL] === 'AIC++');
+  const cpp = rows.filter(r => r[GROUP_COL] !== 'AIC++');
+  const total = rows.length;
+
+  function passCount(sub) {
+    return sub.filter(r => { const s = parseFloat(r['卷面成绩']); return !isNaN(s) && s >= SCORE_PASS; }).length;
+  }
+  function gradeCounts(sub) {
+    let ex = 0, gd = 0, ok = 0;
+    sub.forEach(r => { const s = parseFloat(r['卷面成绩']) || 0; if (s >= SCORE_EXCELLENT) ex++; else if (s >= SCORE_GOOD) gd++; else if (s >= SCORE_PASS) ok++; });
+    return [ex, gd, ok];
+  }
+
+  const allPass = passCount(rows), aicPass = passCount(aic), cppPass = passCount(cpp);
+  const qStats = {};
+  objCols.forEach((c, i) => {
+    const r2 = sub => pctNum(sub.filter(r => parseFloat(r[c]) > 0).length, sub.length);
+    qStats['选择题第' + (i+1) + '题'] = { type: 'rate', val: r2(rows), aicVal: r2(aic), cppVal: r2(cpp) };
+  });
+  judgeCols.forEach((c, k) => {
+    const r2 = sub => pctNum(sub.filter(r => parseFloat(r[c]) > 0).length, sub.length);
+    qStats['判断题第' + (k+1) + '题'] = { type: 'rate', val: r2(rows), aicVal: r2(aic), cppVal: r2(cpp) };
+  });
+  subCols.forEach((c, j) => {
+    const a2 = sub => { const v = sub.map(r => parseFloat(r[c]) || 0); return v.length ? parseFloat((v.reduce((a,b)=>a+b,0)/v.length).toFixed(2)) : 0; };
+    qStats['操作题第' + (j+1) + '题'] = { type: 'avg', val: a2(rows), aicVal: a2(aic), cppVal: a2(cpp) };
+  });
+
+  return {
+    total, allPass, allPassRate: pctNum(allPass, total),
+    gradeCounts: gradeCounts(rows),
+    allObjAvg:   avg(rows, '客观题得分'), allJudgeAvg: avg(rows, '判断题得分'), allSubAvg: avg(rows, '主观题得分'), allVolAvg: avg(rows, '卷面成绩'),
+    aicTotal: aic.length, aicPass, aicRatio: pctNum(aic.length, total), aicPassRate: pctNum(aicPass, aic.length),
+    aicGrades: gradeCounts(aic), aicObjAvg: avg(aic, '客观题得分'), aicJudgeAvg: avg(aic, '判断题得分'), aicSubAvg: avg(aic, '主观题得分'), aicVolAvg: avg(aic, '卷面成绩'),
+    cppTotal: cpp.length, cppPass, cppRatio: pctNum(cpp.length, total), cppPassRate: pctNum(cppPass, cpp.length),
+    cppGrades: gradeCounts(cpp), cppObjAvg: avg(cpp, '客观题得分'), cppJudgeAvg: avg(cpp, '判断题得分'), cppSubAvg: avg(cpp, '主观题得分'), cppVolAvg: avg(cpp, '卷面成绩'),
+    hasJudge: judgeCols.length > 0,
+    qStats
+  };
+}
+
+function renderPythonResults(sessionMetrics, mTotal) {
+  const container = document.getElementById('resultContent');
+  let html = '';
+  const sum = mTotal || (sessionMetrics[0] && sessionMetrics[0].m);
+  if (sum) {
+    html += `<div class="summary-grid">
+      <div class="stat-card"><div class="label">实际参考人数</div><div class="value">${sum.total}</div><div class="sub">人</div></div>
+      <div class="stat-card"><div class="label">全卷通过率</div><div class="value">${sum.allPassRate}%</div><div class="sub">${sum.allPass}/${sum.total} 人通过</div></div>
+      <div class="stat-card"><div class="label">AIC++ 通过率</div><div class="value">${sum.aicPassRate}%</div><div class="sub">${sum.aicPass}/${sum.aicTotal} 人</div></div>
+      <div class="stat-card"><div class="label">C++小班通过率</div><div class="value">${sum.cppPassRate}%</div><div class="sub">${sum.cppPass}/${sum.cppTotal} 人</div></div>
+    </div>`;
+  }
+  sessionMetrics.forEach(({ name, m, removed }) => { html += renderPythonCard(name, m, removed); });
+  if (mTotal && sessionMetrics.length > 1) html += renderPythonCard('汇总（所有场次）', mTotal, 0, true);
+  container.innerHTML = html;
+}
+
+function renderPythonCard(name, m, removed, isTotal = false) {
+  const removeNote = removed > 0 ? `<span style="font-size:12px;color:#a0aec0;font-weight:400">（已清洗 ${removed} 条）</span>` : '';
+  const judgeRow = m.hasJudge ? `<tr><td>判断题均分</td><td>${m.allJudgeAvg}</td><td>${m.aicJudgeAvg}</td><td>${m.cppJudgeAvg}</td></tr>` : '';
+  let qHtml = '';
+  if (Object.keys(m.qStats).length) {
+    qHtml = `<div style="margin-top:16px">
+      <div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:8px">每道题统计</div>
+      <table class="metrics-table">
+        <tr><th>题目</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>`;
+    Object.entries(m.qStats).forEach(([qname, {type, val, aicVal, cppVal}]) => {
+      const fmt = v => type === 'rate' ? v + '%' : v;
+      const unit = type === 'rate' ? '正确率' : '均分';
+      qHtml += `<tr><td>${qname} <span style="font-size:11px;color:#a0aec0">${unit}</span></td><td>${fmt(val)}</td><td>${fmt(aicVal)}</td><td>${fmt(cppVal)}</td></tr>`;
+    });
+    qHtml += '</table></div>';
+  }
+  return `<div class="session-card">
+    <div class="session-title">${isTotal ? '📊 ' : '📋 '}${name} ${removeNote}</div>
+    <table class="metrics-table">
+      <tr><th>指标</th><th>全体</th><th>AIC++</th><th>C++小班</th></tr>
+      <tr class="section-row"><td colspan="4">── 基础指标 ──</td></tr>
+      <tr><td>参考人数</td><td>${m.total} 人</td><td>${m.aicTotal} 人（${m.aicRatio}%）</td><td>${m.cppTotal} 人（${m.cppRatio}%）</td></tr>
+      <tr><td>全卷通过率</td><td><span class="badge ${m.allPassRate>=60?'badge-pass':'badge-fail'}">${m.allPassRate}%（${m.allPass}人）</span></td><td><span class="badge ${m.aicPassRate>=60?'badge-pass':'badge-fail'}">${m.aicPassRate}%（${m.aicPass}人）</span></td><td><span class="badge ${m.cppPassRate>=60?'badge-pass':'badge-fail'}">${m.cppPassRate}%（${m.cppPass}人）</span></td></tr>
+      <tr><td>优/良/合格人数</td><td>${gradeStr(m.gradeCounts)}</td><td>${gradeStr(m.aicGrades)}</td><td>${gradeStr(m.cppGrades)}</td></tr>
+      <tr class="section-row"><td colspan="4">── 均分 ──</td></tr>
+      <tr><td>客观题均分</td><td>${m.allObjAvg}</td><td>${m.aicObjAvg}</td><td>${m.cppObjAvg}</td></tr>
+      ${judgeRow}
+      <tr><td>主观题均分</td><td>${m.allSubAvg}</td><td>${m.aicSubAvg}</td><td>${m.cppSubAvg}</td></tr>
+      <tr><td>卷面均分</td><td>${m.allVolAvg}</td><td>${m.aicVolAvg}</td><td>${m.cppVolAvg}</td></tr>
+    </table>
+    ${qHtml}
+  </div>`;
+}
+
+async function analyzePython() {
   hideError();
-  if (!file4Data || !file5Data) { showError('请先上传两个文件'); return; }
-  document.getElementById('btnAnalyzeAI').disabled = true;
+  if (!file4Data || !file5Data) { showError('请先上传用户总表和 Python AI 成绩明细'); return; }
+  document.getElementById('btnAnalyzePython').disabled = true;
   document.getElementById('loading').style.display = 'block';
   document.getElementById('results').style.display = 'none';
   await new Promise(r => setTimeout(r, 50));
@@ -701,136 +858,136 @@ async function analyzeAI() {
       const rows = sheetToRows(wb1.Sheets[sn]);
       if (rows.length && GROUP_COL in rows[0]) { userRows = rows; break; }
     }
-    if (!userRows) throw new Error(`用户总表中未找到「${GROUP_COL}」字段`);
+    if (!userRows) throw new Error(`用户总表中未找到「${GROUP_COL}」字段，请确认文件正确`);
     const seen = new Set();
-    userRows = userRows.filter(r => { const k=String(r[CERT_COL]||''); if(seen.has(k))return false; seen.add(k); return true; });
+    userRows = userRows.filter(r => { const k = String(r[CERT_COL] || ''); if (seen.has(k)) return false; seen.add(k); return true; });
 
     const wb2 = readWorkbook(file5Data.buf);
-    const sessionMetrics=[], allCleanedRows=[];
-    let globalObjCols=[], globalJudgeCols=[], globalSubCols=[];
+    const parsedSheets = {};
+    let globalObjCols = [], globalJudgeCols = [], globalSubCols = [];
+    wb2.SheetNames.forEach(sn => {
+      const raw = sheetToRows(wb2.Sheets[sn]);
+      const { rows: parsed, objCols, judgeCols, subCols } = parseScoreSheetPython(raw);
+      parsedSheets[sn] = { rows: parsed, objCols, judgeCols, subCols };
+      if (objCols.length > globalObjCols.length) { globalObjCols = objCols; globalJudgeCols = judgeCols; globalSubCols = subCols; }
+    });
+
+    const sessionMetrics = [];
+    const allCleanedRows = [];
     for (const sn of wb2.SheetNames) {
-      const { rows:parsed, objCols, judgeCols, subCols } = parseScoreSheetAI(sheetToRows(wb2.Sheets[sn]));
-      if (!parsed.length) continue;
-      if (objCols.length > globalObjCols.length) { globalObjCols=objCols; globalJudgeCols=judgeCols; globalSubCols=subCols; }
-      const joined = joinScoresAI(userRows, parsed, objCols, judgeCols, subCols);
-      const before = joined.length, cleaned = cleanData(joined);
-      const m = computeMetricsAI(cleaned, objCols, judgeCols, subCols);
+      const sheetInfo = parsedSheets[sn] || { rows: [], objCols: globalObjCols, judgeCols: globalJudgeCols, subCols: globalSubCols };
+      const { rows: scoreRows, objCols, judgeCols, subCols } = sheetInfo;
+      const joined = joinScoresPython(userRows, scoreRows, objCols, judgeCols, subCols);
+      const beforeClean = joined.length;
+      const cleaned = cleanData(joined);
+      const m = computeMetricsPython(cleaned, objCols, judgeCols, subCols);
       if (!m) continue;
-      sessionMetrics.push({ name:sn, m, removed:before-cleaned.length });
+      sessionMetrics.push({ name: sn, m, removed: beforeClean - cleaned.length });
       allCleanedRows.push(...cleaned);
     }
-    if (!sessionMetrics.length) throw new Error('未找到有效场次数据');
-    const mTotal = sessionMetrics.length>1 ? computeMetricsAI(allCleanedRows,globalObjCols,globalJudgeCols,globalSubCols) : null;
-    lastAISessionMetrics=sessionMetrics; lastAIObjCols=globalObjCols; lastAIJudgeCols=globalJudgeCols; lastAISubCols=globalSubCols; lastAIMTotal=mTotal;
-    document.getElementById('dlBtn').onclick = downloadExcelAI;
-    renderResultsAI(sessionMetrics, mTotal);
+    if (!sessionMetrics.length) throw new Error('未找到有效场次数据，请检查文件格式');
+
+    let mTotal = null;
+    if (sessionMetrics.length > 1) mTotal = computeMetricsPython(allCleanedRows, globalObjCols, globalJudgeCols, globalSubCols);
+
+    lastPythonSessionMetrics = sessionMetrics;
+    lastPythonObjCols   = globalObjCols;
+    lastPythonJudgeCols = globalJudgeCols;
+    lastPythonSubCols   = globalSubCols;
+    lastPythonMTotal    = mTotal;
+
+    document.getElementById('dlBtn').onclick = downloadExcelPython;
+    renderPythonResults(sessionMetrics, mTotal);
     document.getElementById('results').style.display = 'block';
-  } catch(e) { showError(e.message||'分析失败，请检查文件格式'); }
-  finally { document.getElementById('loading').style.display='none'; document.getElementById('btnAnalyzeAI').disabled=false; }
+  } catch(e) {
+    showError(e.message || '分析失败，请检查文件格式');
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('btnAnalyzePython').disabled = false;
+  }
 }
 
-// ── Download helpers ──────────────────────────────────
-function _buildExcelDual(datasets) {
+function downloadExcelPython() {
   const wb = XLSX.utils.book_new();
-  const qs = datasets[0][1].qStats, qNames = Object.keys(qs);
+  const datasets = [];
+  lastPythonSessionMetrics.forEach(({name, m}) => datasets.push([name, m]));
+  if (lastPythonMTotal && lastPythonSessionMetrics.length > 1) datasets.push(['汇总（所有场次）', lastPythonMTotal]);
+  if (!datasets.length) return;
+
+  const qs = datasets[0][1].qStats;
+  const qNames = Object.keys(qs);
+  const hasJudge = datasets[0][1].hasJudge;
   const aoa1 = [];
+  const sec  = label => aoa1.push(['── ' + label + ' ──', '', '', '']);
+  const row4 = (label, a, b, c) => aoa1.push([label, a, b, c]);
+
   datasets.forEach(([label, m]) => {
-    aoa1.push([label,'全体','AIC++','C++小班']);
-    aoa1.push(['── 基础指标 ──','','','']);
-    aoa1.push(['实际参考人数（人）',m.total,m.aicTotal,m.cppTotal]);
-    aoa1.push(['考生占比','100%',m.aicRatio+'%',m.cppRatio+'%']);
-    aoa1.push(['全卷通过率',m.allPassRate+'%',m.aicPassRate+'%',m.cppPassRate+'%']);
-    aoa1.push(['通过人数（人）',m.allPass,m.aicPass,m.cppPass]);
-    aoa1.push(['不合格人数（人）',m.total-m.allPass,m.aicTotal-m.aicPass,m.cppTotal-m.cppPass]);
-    aoa1.push(['合格 60-74（人）',m.gradeCounts[2],m.aicGrades[2],m.cppGrades[2]]);
-    aoa1.push(['良好 75-89（人）',m.gradeCounts[1],m.aicGrades[1],m.cppGrades[1]]);
-    aoa1.push(['优秀 ≥90（人）',m.gradeCounts[0],m.aicGrades[0],m.cppGrades[0]]);
-    aoa1.push(['── 均分 ──','','','']);
-    aoa1.push(['客观题均分',m.allObjAvg,m.aicObjAvg,m.cppObjAvg]);
-    if (m.allJudgeAvg !== undefined) aoa1.push(['判断题均分',m.allJudgeAvg,m.aicJudgeAvg,m.cppJudgeAvg]);
-    aoa1.push(['操作题均分',m.allSubAvg,m.aicSubAvg,m.cppSubAvg]);
-    aoa1.push(['卷面均分',m.allVolAvg,m.aicVolAvg,m.cppVolAvg]);
-    aoa1.push(['── 每道题统计 ──','','','']);
-    aoa1.push(['题目','全体','AIC++','C++小班']);
+    aoa1.push([label, '全体', 'AIC++', 'C++小班']);
+    sec('基础指标');
+    row4('实际参考人数（人）',   m.total,             m.aicTotal,          m.cppTotal);
+    row4('考生占比',             '100%',              m.aicRatio + '%',    m.cppRatio + '%');
+    row4('全卷通过率',           m.allPassRate + '%', m.aicPassRate + '%', m.cppPassRate + '%');
+    row4('通过人数（人）',       m.allPass,           m.aicPass,           m.cppPass);
+    row4('不合格人数（人）',     m.total - m.allPass, m.aicTotal - m.aicPass, m.cppTotal - m.cppPass);
+    row4('合格人数 60-74（人）', m.gradeCounts[2],    m.aicGrades[2],      m.cppGrades[2]);
+    row4('良好人数 75-89（人）', m.gradeCounts[1],    m.aicGrades[1],      m.cppGrades[1]);
+    row4('优秀人数 ≥90（人）',   m.gradeCounts[0],    m.aicGrades[0],      m.cppGrades[0]);
+    sec('均分');
+    row4('客观题均分', m.allObjAvg,   m.aicObjAvg,   m.cppObjAvg);
+    if (hasJudge) row4('判断题均分', m.allJudgeAvg, m.aicJudgeAvg, m.cppJudgeAvg);
+    row4('操作题均分', m.allSubAvg,   m.aicSubAvg,   m.cppSubAvg);
+    row4('卷面均分',   m.allVolAvg,   m.aicVolAvg,   m.cppVolAvg);
+    sec('每道题统计');
+    aoa1.push(['题目', '全体', 'AIC++', 'C++小班']);
     qNames.forEach(qname => {
-      const {type}=qs[qname], unit=type==='rate'?'正确率':'均分';
-      const fmt=(m,k)=>{const q=m.qStats[qname];return q?(type==='rate'?q[k]+'%':q[k]):''};
-      aoa1.push([qname+'（'+unit+'）',fmt(m,'val'),fmt(m,'aicVal'),fmt(m,'cppVal')]);
+      const {type} = qs[qname];
+      const unit = type === 'rate' ? '正确率' : '均分';
+      const fmt = (m, key) => { const q = m.qStats[qname]; return q ? (type === 'rate' ? q[key] + '%' : q[key]) : ''; };
+      row4(qname + '（' + unit + '）', fmt(m,'val'), fmt(m,'aicVal'), fmt(m,'cppVal'));
     });
-    aoa1.push(['','','','']);
+    aoa1.push(['', '', '', '']);
   });
+
   const ws1 = XLSX.utils.aoa_to_sheet(aoa1);
-  ws1['!cols']=[{wch:26},{wch:16},{wch:16},{wch:16}];
+  ws1['!cols'] = [{ wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
   XLSX.utils.book_append_sheet(wb, ws1, '分析结果');
 
-  const aoa2=[];
-  datasets.forEach(([label,m]) => {
-    aoa2.push([label,'全体','AIC++','C++小班']);
+  const aoa2 = [];
+  datasets.forEach(([label, m]) => {
+    aoa2.push([label, '全体', 'AIC++', 'C++小班']);
     qNames.forEach(qname => {
-      const {type}=qs[qname], raw=(m,k)=>{const q=m.qStats[qname];return q?q[k]:''};
-      aoa2.push([qname+'（'+(type==='rate'?'正确率%':'均分')+'）',raw(m,'val'),raw(m,'aicVal'),raw(m,'cppVal')]);
+      const {type} = qs[qname];
+      const raw = (m, key) => { const q = m.qStats[qname]; return q ? q[key] : ''; };
+      aoa2.push([qname + '（' + (type==='rate'?'正确率%':'均分') + '）', raw(m,'val'), raw(m,'aicVal'), raw(m,'cppVal')]);
     });
-    aoa2.push(['全卷通过率%',m.allPassRate,m.aicPassRate,m.cppPassRate]);
-    aoa2.push(['通过人数',m.allPass,m.aicPass,m.cppPass]);
-    aoa2.push(['实际参考人数',m.total,m.aicTotal,m.cppTotal]);
-    aoa2.push(['考生占比%',100,m.aicRatio,m.cppRatio]);
-    aoa2.push(['','','','']);
+    aoa2.push(['全卷通过率%',  m.allPassRate,  m.aicPassRate,  m.cppPassRate]);
+    aoa2.push(['通过人数',     m.allPass,      m.aicPass,      m.cppPass]);
+    aoa2.push(['实际参考人数', m.total,        m.aicTotal,     m.cppTotal]);
+    aoa2.push(['考生占比%',    100,            m.aicRatio,     m.cppRatio]);
+    aoa2.push(['', '', '', '']);
   });
-  const ws2=XLSX.utils.aoa_to_sheet(aoa2);
-  ws2['!cols']=[{wch:26},{wch:14},{wch:14},{wch:14}];
-  XLSX.utils.book_append_sheet(wb,ws2,'复制粘贴');
-  return wb;
+  const ws2 = XLSX.utils.aoa_to_sheet(aoa2);
+  ws2['!cols'] = [{ wch: 26 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws2, '复制粘贴');
+  XLSX.writeFile(wb, 'result_python.xlsx');
 }
 
-function downloadExcel() {
-  const datasets=[];
-  lastSessionMetrics.forEach(({name,m})=>datasets.push([name,m]));
-  if(lastMTotal&&lastSessionMetrics.length>1) datasets.push(['汇总（所有场次）',lastMTotal]);
-  if(!datasets.length) return;
-  XLSX.writeFile(_buildExcelDual(datasets),'result.xlsx');
-}
-
-function downloadExcelAI() {
-  const datasets=[];
-  lastAISessionMetrics.forEach(({name,m})=>datasets.push([name,m]));
-  if(lastAIMTotal&&lastAISessionMetrics.length>1) datasets.push(['汇总（所有场次）',lastAIMTotal]);
-  if(!datasets.length) return;
-  XLSX.writeFile(_buildExcelDual(datasets),'result_ai.xlsx');
-}
-
-function downloadExcelSingle() {
-  const wb=XLSX.utils.book_new();
-  const datasets=[];
-  lastSessionMetrics.forEach(({name,m})=>datasets.push([name,m]));
-  if(lastMTotal&&lastSessionMetrics.length>1) datasets.push(['汇总（所有场次）',lastMTotal]);
-  if(!datasets.length) return;
-  const qs=datasets[0][1].qStats, qNames=Object.keys(qs);
-  const aoa=[];
-  datasets.forEach(([label,m]) => {
-    aoa.push([label,'数值']);
-    aoa.push(['── 基础指标 ──','']);
-    aoa.push(['实际参考人数（人）',m.total]);
-    aoa.push(['全卷通过率（%）',m.allPassRate]);
-    aoa.push(['通过人数（人）',m.allPass]);
-    aoa.push(['不合格（人）',m.total-m.allPass]);
-    aoa.push(['合格 60-74（人）',m.gradeCounts[2]]);
-    aoa.push(['良好 75-89（人）',m.gradeCounts[1]]);
-    aoa.push(['优秀 ≥90（人）',m.gradeCounts[0]]);
-    aoa.push(['── 均分 ──','']);
-    aoa.push(['客观题均分',m.objAvg]);
-    aoa.push(['操作题均分',m.subAvg]);
-    aoa.push(['卷面均分',m.volAvg]);
-    aoa.push(['── 每道题统计 ──','']);
-    qNames.forEach(qname => {
-      const {type,val}=m.qStats[qname];
-      aoa.push([qname+'（'+(type==='rate'?'正确率':'均分')+'）',type==='rate'?val+'%':val]);
-    });
-    aoa.push(['','']);
+// ── 重置 ────────────────────────────────────────────────────
+function resetAll() {
+  file1Data = null; file2Data = null; file3Data = null; file4Data = null; file5Data = null;
+  lastSessionMetrics = []; lastObjCols = []; lastSubCols = []; lastMTotal = null;
+  lastPythonSessionMetrics = []; lastPythonObjCols = []; lastPythonJudgeCols = []; lastPythonSubCols = []; lastPythonMTotal = null;
+  [1,2,3,4,5].forEach(n => {
+    document.getElementById('drop' + n).classList.remove('has-file','drag-over');
+    document.getElementById('name' + n).textContent = '';
+    document.getElementById('file' + n).value = '';
   });
-  const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:26},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,ws,'统计结果');
-  XLSX.writeFile(wb,'result_single.xlsx');
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('btnAnalyze').disabled = false;
+  document.getElementById('btnAnalyzeSingle').disabled = false;
+  document.getElementById('btnAnalyzePython').disabled = false;
+  hideError();
 }
 </script>
 </body>
