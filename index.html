@@ -65,9 +65,9 @@
   <p>上传用户总表和成绩明细，自动生成分析报告</p>
 </div>
 <div class="tab-bar">
-  <button class="tab active" id="tab-dual"   onclick="switchTab('dual')"> C++双表统计（分渠道）</button>
-  <button class="tab"        id="tab-single" onclick="switchTab('single')"> C++单表统计</button>
-  <button class="tab"        id="tab-python" onclick="switchTab('python')"> AP单表统计</button>
+  <button class="tab active" id="tab-dual"   onclick="switchTab('dual')">📊 双表分析（分渠道）</button>
+  <button class="tab"        id="tab-single" onclick="switchTab('single')">📋 单表统计（仅成绩）</button>
+  <button class="tab"        id="tab-python" onclick="switchTab('python')">🐍 Python AI（含判断题）</button>
 </div>
 
 <div class="container">
@@ -197,6 +197,7 @@ function handleFile(f,n) {
 function showError(msg){const b=document.getElementById('errorBox');b.textContent='⚠️ '+msg;b.style.display='block';}
 function hideError(){document.getElementById('errorBox').style.display='none';}
 function readWorkbook(buf){return XLSX.read(new Uint8Array(buf),{type:'array',cellDates:true});}
+function writeWorkbook(wb,name){XLSX.writeFile(wb,name,{cellStyles:true});}
 
 function sheetToRows(ws) {
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
@@ -360,6 +361,19 @@ async function analyze(){
   finally{document.getElementById('loading').style.display='none';document.getElementById('btnAnalyze').disabled=false;}
 }
 
+function centerAllCells(ws){
+  if(!ws['!ref'])return;
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let R=range.s.r;R<=range.e.r;R++){
+    for(let C=range.s.c;C<=range.e.c;C++){
+      const addr=XLSX.utils.encode_cell({r:R,c:C});
+      if(!ws[addr])continue;
+      if(!ws[addr].s)ws[addr].s={};
+      ws[addr].s.alignment={horizontal:'center',vertical:'center',wrapText:true};
+    }
+  }
+}
+
 function downloadExcel(){
   const wb=XLSX.utils.book_new();
   const datasets=[];
@@ -392,6 +406,7 @@ function downloadExcel(){
     aoa1.push(['','','','']);
   });
   const ws1=XLSX.utils.aoa_to_sheet(aoa1);ws1['!cols']=[{wch:26},{wch:16},{wch:16},{wch:16}];
+  centerAllCells(ws1);
   XLSX.utils.book_append_sheet(wb,ws1,'分析结果');
   const aoa2=[];
   datasets.forEach(([label,m])=>{
@@ -404,8 +419,9 @@ function downloadExcel(){
     aoa2.push(['','','','']);
   });
   const ws2=XLSX.utils.aoa_to_sheet(aoa2);ws2['!cols']=[{wch:26},{wch:14},{wch:14},{wch:14}];
+  centerAllCells(ws2);
   XLSX.utils.book_append_sheet(wb,ws2,'复制粘贴');
-  XLSX.writeFile(wb,'result.xlsx');
+  writeWorkbook(wb,'result.xlsx');
 }
 
 // ── 单表统计 ─────────────────────────────────────────────────
@@ -521,8 +537,9 @@ function downloadExcelSingle(){
     aoa.push(['','']);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:26},{wch:16}];
+  centerAllCells(ws);
   XLSX.utils.book_append_sheet(wb,ws,'统计结果');
-  XLSX.writeFile(wb,'result_single.xlsx');
+  writeWorkbook(wb,'result_single.xlsx');
 }
 
 // ── Python AI 单表（含判断题）────────────────────────────────
@@ -661,8 +678,9 @@ function downloadExcelPython(){
     aoa.push(['','']);
   });
   const ws=XLSX.utils.aoa_to_sheet(aoa);ws['!cols']=[{wch:26},{wch:16}];
+  centerAllCells(ws);
   XLSX.utils.book_append_sheet(wb,ws,'统计结果');
-  XLSX.writeFile(wb,'result_python.xlsx');
+  writeWorkbook(wb,'result_python.xlsx');
 }
 
 // ── 重置 ────────────────────────────────────────────────────
